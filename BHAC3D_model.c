@@ -10,12 +10,8 @@
 
 struct of_spectrum ***spect;
 extern struct of_spectrum ***shared_spect;
-double ***Xi_spec;
-extern double ***shared_Xi_spec;
-double ***ispec;
-extern double ***shared_ispec;
 
-#pragma omp threadprivate(spect, Xi_spec, ispec)
+#pragma omp threadprivate(spect)
 
 void init_model(char *args[]) {
   set_units(args[3], args[4]);
@@ -34,20 +30,7 @@ void init_model(char *args[]) {
             (struct of_spectrum *)malloc(N_EBINS * sizeof(struct of_spectrum));
       }
     }
-    Xi_spec = (double ***)malloc(N1 * sizeof(double **));
-    ispec = (double ***)malloc(N1 * sizeof(double **));
-    for (i = 0; i < N1; i++) {
-      Xi_spec[i] = (double **)malloc(N2 * sizeof(double *));
-      ispec[i] = (double **)malloc(N2 * sizeof(double *));
-      for (j = 0; j < N2; j++) {
-        Xi_spec[i][j] = (double *)malloc(N3 * sizeof(double));
-        ispec[i][j] = (double *)malloc(N3 * sizeof(double));
-        for (k = 0; k < N3; k++) {
-          Xi_spec[i][j][k] = 0;
-          ispec[i][j][k] = 0;
-        }
-      }
-    }
+
   }
   //	get_profiles();
   Rh = 1 + sqrt(1. - a * a);
@@ -771,12 +754,7 @@ void record_super_photon(struct of_photon *ph) {
   spect[ix2][ix3][iE].thetae0 += ph->w * (ph->thetae0);
   spect[ix2][ix3][iE].nscatt += ph->nscatt;
   spect[ix2][ix3][iE].nph += 1.;
-  if (exp(lE) * ME * CL * CL / HPL < pow(10, 19) &&
-      exp(lE) * ME * CL * CL / HPL > pow(10, 9)) {
-    Xi_spec[ii][jj][kk] +=
-        ph->w / (pow(L_unit, 3)); //*dix1*dix2*dix3*g);//WEIGHT_MIN/WEIGHT_MIN;
-    ispec[ii][jj][kk] += ph->w * ph->E / (exp(lE) * ME * CL * CL / HPL);
-  }
+
   // dx1dx2dx3sqrt(-g)
 }
 
@@ -806,14 +784,7 @@ void omp_reduce_spect() {
         }
       }
     }
-    for (i = 0; i < N1; i++) {
-      for (j = 0; j < N2; j++) {
-        for (k = 0; k < N3; k++) {
-          shared_Xi_spec[i][j][k] += Xi_spec[i][j][k];
-          shared_ispec[i][j][k] += ispec[i][j][k];
-        }
-      }
-    }
+
   }
 #pragma omp barrier
 #pragma omp master
@@ -836,27 +807,8 @@ void omp_reduce_spect() {
         }
       }
     }
-    double norm_ispec = 0;
-    for (i = 0; i < N1; i++) {
-      for (j = 0; j < N2; j++) {
-        for (k = 0; k < N3; k++) {
-          shared_ispec[i][j][k] =
-              (ME * CL * CL) * shared_ispec[i][j][k] * (1. / dlE);
-          norm_ispec += shared_ispec[i][j][k];
-        }
-      }
-    }
-    fprintf(stderr, "norm ispec = %g\n", norm_ispec);
-    for (i = 0; i < N1; i++) {
-      for (j = 0; j < N2; j++) {
-        for (k = 0; k < N3; k++) {
-          Xi_spec[i][j][k] = shared_Xi_spec[i][j][k];
-          ispec[i][j][k] = shared_ispec[i][j][k] / norm_ispec;
-          // if(Xi_spec[i][j][k]>0)
-          //    fprintf(stderr, "%10.5g\n", Xi_spec[i][j][k]);
-        }
-      }
-    }
+
+
   }
 }
 
