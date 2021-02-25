@@ -187,8 +187,8 @@ void init_weight_table(void)
  #define BTHSQMAX (1.e-2)
  #define NINT (20000)
  #else
- #define BTHSQMIN (1.e-5)
- #define BTHSQMAX (1.e-2)
+ #define BTHSQMIN (1.e-4)
+ #define BTHSQMAX (1.e9)
  #define NINT (20000)
  #endif
 
