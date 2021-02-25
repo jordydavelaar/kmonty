@@ -20,8 +20,8 @@
 #define MPI 0
 #define OPENMP 1
 
-#define MKS 0
-#define CKS 1
+#define MKS 1
+#define CKS 0
 
 #define THERMAL 1
 #define KAPPA 0

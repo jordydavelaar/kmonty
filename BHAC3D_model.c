@@ -176,14 +176,14 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
   b2 = pow(beta / beta_trans, 2);
   trat = trat_d * b2 / (1. + b2) + trat_j / (1. + b2);
   // two_temp_gam = 0.5 * ((1. + 2. / 3. * (trat + 1.) / (trat + 2.)) + gam);
-  two_temp_gam = 4. / 3.;
+  two_temp_gam = gam;
   Th_unit = (two_temp_gam - 1.) * (MP / ME) / (1. + trat);
   *Thetae = (p[UU][i][j][k] / p[KRHO][i][j][k]) * Th_unit;
   Be = (-(1. + two_temp_gam * p[UU][i][j][k] / p[KRHO][i][j][k] +
           bsq / 2. / p[KRHO][i][j][k]) *
         Ucov[0]);
 
-  if (bsq / p[KRHO][i][j][k] > 1. || exp(X[1]) > 200.) {
+  if (bsq / p[KRHO][i][j][k] > 1.) {
     *Ne = 0;
   }
 
@@ -298,15 +298,14 @@ void get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
   b2 = pow(beta / beta_trans, 2);
   trat = trat_d * b2 / (1. + b2) + trat_j / (1. + b2);
 
-  two_temp_gam =
-      4. / 3.; // 0.5 * ((1. + 2. / 3. * (trat + 1.) / (trat + 2.)) + gam);
+  two_temp_gam = gam; // 0.5 * ((1. + 2. / 3. * (trat + 1.) / (trat + 2.)) + gam);
   Th_unit = (two_temp_gam - 1.) * (MP / ME) / (1. + trat);
 
   *Thetae = (uu / rho) * Th_unit;
 
   Be = (-(1. + two_temp_gam * uu / rho + bsq / 2. / rho) * Ucov[0]);
 
-  if (bsq / rho > 1. || exp(X[1]) > 200.) {
+  if (bsq / rho > 1. ) {
     *Ne = 0;
   }
 }
@@ -639,7 +638,7 @@ double stepsize(double X[NDIM], double K[NDIM], double tau) {
   double idlx1, idlx2, idlx3;
 
   dlx1 = EPS / (fabs(K[1]) + SMALL * SMALL);
-  dlx2 = EPS * GSL_MIN(X[2], 1 - X[2]) / (fabs(K[2]) + SMALL * SMALL);
+  dlx2 = EPS * GSL_MIN(X[2], M_PI - X[2]) / (fabs(K[2]) + SMALL * SMALL);
   dlx3 = EPS / (fabs(K[3]) + SMALL * SMALL);
 
   idlx1 = 1. / (fabs(dlx1) + SMALL * SMALL);
@@ -740,7 +739,7 @@ void record_super_photon(struct of_photon *ph) {
   N_superph_recorded++;
   //#pragma omp atomic
   N_scatt += ph->nscatt;
-  fprintf(stderr,"%e %e %e\n",ix2,ix3,iE);
+  fprintf(stderr,"%d %d %d\n",ix2,ix3,iE);
   /* sum in photon */
   spect[ix2][ix3][iE].dNdlE += ph->w;
   spect[ix2][ix3][iE].dEdlE += ph->w * ph->E;
