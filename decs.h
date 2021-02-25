@@ -128,10 +128,10 @@ struct of_spectrum {
 
 typedef struct of_spectrum type_spectr;
 
-#define N_ESAMP		200
-#define N_EBINS		200
-#define N_THBINS	180
-#define N_PHIBINS       90
+#define N_ESAMP		 200
+#define N_EBINS		 200
+#define N_THBINS	 4
+#define N_PHIBINS 8
 
 int N1, N2, N3;
 
