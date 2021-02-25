@@ -17,7 +17,8 @@ void init_model(char *args[]) {
   set_units(args[3], args[4]);
 
   init_bhac3d_data(args[2]);
-
+  
+#pragma omp parallel
   {
     int i, j, k;
     spect = (struct of_spectrum ***)malloc(N_THBINS *
