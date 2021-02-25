@@ -740,7 +740,7 @@ void record_super_photon(struct of_photon *ph) {
   N_superph_recorded++;
   //#pragma omp atomic
   N_scatt += ph->nscatt;
-
+  fprintf(stderr,"%e %e %e\n",ix2,ix3,iE);
   /* sum in photon */
   spect[ix2][ix3][iE].dNdlE += ph->w;
   spect[ix2][ix3][iE].dEdlE += ph->w * ph->E;
