@@ -17,7 +17,7 @@ void init_model(char *args[]) {
   set_units(args[3], args[4]);
 
   init_bhac3d_data(args[2]);
-  
+
 #pragma omp parallel
   {
     int i, j, k;
@@ -93,6 +93,7 @@ double bias_func(double Te, double w) {
     bias = 1.;
   if (bias > 3000.0)
     bias = 3000.0;
+<<<<<<< HEAD
   return 0; // bias;
   /* double bias,max,c,avg_num_scatt;
      avg_num_scatt = 2.+N_scatt / (1. * N_superph_recorded + 1.);
@@ -113,6 +114,10 @@ double bias_func(double Te, double w) {
      // if(bias<1.0) bias=1./(max_tau_scatt*avg_num_scatt);
      // fprintf(stderr,"bias %g %g\n", bias, max);
      return bias;*/
+=======
+  return  bias;
+
+>>>>>>> 5c6868b9b33945e531358c9f19bc1fec1ddadc4b
 }
 
 /*
@@ -236,6 +241,7 @@ void get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
 
   gcon_func(X, gcon);
 
+<<<<<<< HEAD
   /* Get Ucov based on zonal or reconstructed values*/
   /*        VdotV = 0.;
           for (i = 1; i < NDIM; i++)
@@ -254,6 +260,9 @@ void get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
           for (i = 1; i < NDIM; i++)
                   Bcon[i] = (Bp[i] + Ucon[i] * UdotBp) / Ucon[0];
    */
+=======
+
+>>>>>>> 5c6868b9b33945e531358c9f19bc1fec1ddadc4b
   // From gammav^i to v^i
   VdotV = 0.;
   for (int i = 1; i < NDIM; i++)
@@ -270,7 +279,10 @@ void get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
   for (int i = 1; i < NDIM; i++)
     Ucon[i] = Ucon[0] * (Vcon[i] / sqrt(-gcon[0][0]) + gcon[0][i] / gcon[0][0]);
 
+<<<<<<< HEAD
   // lower(Ucon, gcov, Ucov); // Gammie's lowering function
+=======
+>>>>>>> 5c6868b9b33945e531358c9f19bc1fec1ddadc4b
   lower(Ucon, gcov, Ucov);
 
   Bcon[0] = 0;

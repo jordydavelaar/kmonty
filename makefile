@@ -19,10 +19,6 @@ CC_LOAD = $(CC) $(CCFLAGS)
 EXE = kmonty
 all: $(EXE)
 
-SRCS1 = kmonty.c compton.c init_geometry.c tetrads.c geodesics.c \
-radiation.c jnu_mixed.c hotcross.c track_super_photon.c kappa_sampler.c\
-scatter_super_photon.c harm_model.c utils.c init_harm_data.c
-
 SRCS2 = kmonty_mpi.c compton.c init_geometry.c tetrads.c geodesics.c \
 radiation.c jnu_mixed.c hotcross.c track_super_photon.c kappa_sampler.c\
 scatter_super_photon.c sphere_model.c init_sphere_data.c sphere_utils.c
