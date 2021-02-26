@@ -187,7 +187,7 @@ double total_compton_cross_num(double w, double thetae) {
    wlog, along the z axis */
 #if (KAPPA)
   norm = calc_norm(thetae);
-#elif (THERMAL)
+#elif (THERMAL || POWERLAW)
   norm = 1;
 #endif
   cross = 0.;
@@ -209,11 +209,14 @@ double total_compton_cross_num(double w, double thetae) {
 }
 
 double dNdgammae(double thetae, double gammae) {
-  double dNdgammae_nth(double thetae, double gammae);
+  double dNdgammae_kappa(double thetae, double gammae);
+  double dNdgammae_pwl( double gammae);
   double dNdgammae_th(double thetae, double gammae);
 
 #if (KAPPA)
-  return dNdgammae_nth(thetae, gammae);
+  return dNdgammae_kappa(thetae, gammae);
+#elif(POWERLAW)
+  return dNdgammae_pwl(gammae);
 #elif (THERMAL)
   return dNdgammae_th(thetae, gammae);
 #endif
@@ -247,13 +250,22 @@ double kappa_function_int(double beta, void *params) {
          exp(-gamma / gamma_max);
 }
 
-double dNdgammae_nth(double thetae, double gammae) {
+double dNdgammae_kappa(double thetae, double gammae) {
   double kappa = kappa_synch;
 
   // This is not yet normalized!
   double dNdgam = gammae * sqrt(gammae * gammae - 1.) *
                   pow((1 + (gammae - 1) / (kappa * thetae)), -(kappa + 1)) *
                   exp(-gammae / gamma_max);
+  return dNdgam;
+}
+
+double dNdgammae_pwl(double gammae) {
+  double p = pindex;
+
+  // This is not yet normalized!
+  double dNdgam = (p-1)*pow(gamma,-p)/((pow(gmin,1-p)-pow(gmax,1-p)));
+
   return dNdgam;
 }
 
