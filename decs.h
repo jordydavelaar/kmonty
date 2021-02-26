@@ -23,9 +23,9 @@
 #define MKS 1
 #define CKS 0
 
-#define THERMAL 1
+#define THERMAL 0
 #define KAPPA 0
-#define POWERLAW 0
+#define POWERLAW 1
 #define MIXED 0
 
 #define FOLDING 1
@@ -55,6 +55,9 @@
 #define perct_thermal 0.9
 #define nu_cutoff 5.e13
 #define gamma_max 1e3
+#define gmin 25
+#define gmax 1e7
+#define pindex 3
 double yhigh;
 /* mnemonics for primitive vars; conserved vars */
 #define NP 8
@@ -308,8 +311,11 @@ void sample_scattered_photon(double k[NDIM], double p[NDIM],
 			     double kp[NDIM]);
 
 /*compton scattering kappa */
-double sample_y_distr_nth(double Thetae);
+double sample_y_distr_kappa(double Thetae);
 double hypergeom_eval(double X);
+
+/*compton scattering powerlaw */
+double sample_gamma_distr_pwl();
 
 /** model dependent functions required by code: these
    basic interfaces define the model **/

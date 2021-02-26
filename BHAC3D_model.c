@@ -93,7 +93,6 @@ double bias_func(double Te, double w) {
     bias = 1.;
   if (bias > 3000.0)
     bias = 3000.0;
-<<<<<<< HEAD
   return 0; // bias;
   /* double bias,max,c,avg_num_scatt;
      avg_num_scatt = 2.+N_scatt / (1. * N_superph_recorded + 1.);
@@ -118,6 +117,10 @@ double bias_func(double Te, double w) {
   return  bias;
 
 >>>>>>> 5c6868b9b33945e531358c9f19bc1fec1ddadc4b
+=======
+  return  bias;
+
+>>>>>>> powerlaw
 }
 
 /*
@@ -241,7 +244,6 @@ void get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
 
   gcon_func(X, gcon);
 
-<<<<<<< HEAD
   /* Get Ucov based on zonal or reconstructed values*/
   /*        VdotV = 0.;
           for (i = 1; i < NDIM; i++)
@@ -263,6 +265,9 @@ void get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
 =======
 
 >>>>>>> 5c6868b9b33945e531358c9f19bc1fec1ddadc4b
+=======
+
+>>>>>>> powerlaw
   // From gammav^i to v^i
   VdotV = 0.;
   for (int i = 1; i < NDIM; i++)
@@ -279,10 +284,6 @@ void get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
   for (int i = 1; i < NDIM; i++)
     Ucon[i] = Ucon[0] * (Vcon[i] / sqrt(-gcon[0][0]) + gcon[0][i] / gcon[0][0]);
 
-<<<<<<< HEAD
-  // lower(Ucon, gcov, Ucov); // Gammie's lowering function
-=======
->>>>>>> 5c6868b9b33945e531358c9f19bc1fec1ddadc4b
   lower(Ucon, gcov, Ucov);
 
   Bcon[0] = 0;
@@ -752,7 +753,7 @@ void record_super_photon(struct of_photon *ph) {
   N_superph_recorded++;
   //#pragma omp atomic
   N_scatt += ph->nscatt;
-  fprintf(stderr,"%d %d %d\n",ix2,ix3,iE);
+
   /* sum in photon */
   spect[ix2][ix3][iE].dNdlE += ph->w;
   spect[ix2][ix3][iE].dEdlE += ph->w * ph->E;

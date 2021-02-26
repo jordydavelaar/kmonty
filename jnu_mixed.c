@@ -103,9 +103,7 @@ double jnu_integrand_powerlaw(double th, void *params) {
 
  double factor;
  double Js;
- double p=3.;
- double gmin=25.;
- double gmax=1.e7;
+ double p=pindex;
 
  //if (sth < 1.e-150 || x > 1.e8)
  //   return 0.;
@@ -201,9 +199,7 @@ double jnu_synch_powerlaw(double nu, double Ne, double Thetae, double B,
                      double theta) {
 double nuc,sth,Xs,factor;
 double Js;
-double p=3.;
-double gmin=25.;
-double gmax=1.e7;
+double p=pindex;
 
 sth = sin(theta);
 nuc = EE * B / (2. * M_PI * ME * CL);
@@ -402,6 +398,7 @@ void init_emiss_tables_nth(void) {
   }
   gsl_integration_workspace_free(w);
 
+#if KAPPA
   FILE *input;
   input = fopen("hyper2f1.txt", "r");
   double dummy;
@@ -416,7 +413,7 @@ void init_emiss_tables_nth(void) {
   dlK = 1. / dlK;
   dlT = 1. / dlT;
   fprintf(stderr, "done reading hypergeom2F1.\n\n");
-
+#endif
   return;
 }
 
@@ -563,7 +560,7 @@ double hypergeom_eval(double X) {
                      return gsl_sf_hyperg_2F1(a,b,c,-X);
              }
 
-         /* 
+         /*
   di = 1000. * log(X / HYPMIN) / log(10);
   i = (int)di;
   double dX = (X - HYPMIN * pow(10, i / 1000.)) /

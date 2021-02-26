@@ -3,7 +3,7 @@
 #
 
 CC = mpicc #/usr/bin/h5pcc
-CCFLAGS = -Wall -std=c99 -xCORE-AVX2 -fopenmp
+CCFLAGS = -Wall -std=c99  -fopenmp -g -O0
 LDFLAGS = -lm -lgsl -lgslcblas
 
 #CC = gcc
@@ -19,6 +19,13 @@ CC_LOAD = $(CC) $(CCFLAGS)
 EXE = kmonty
 all: $(EXE)
 
+<<<<<<< HEAD
+=======
+SRCS1 = kmonty.c compton.c init_geometry.c tetrads.c geodesics.c \
+radiation.c jnu_mixed.c hotcross.c track_super_photon.c kappa_sampler.c\
+scatter_super_photon.c harm_model.c utils.c init_harm_data.c
+
+>>>>>>> powerlaw
 SRCS2 = kmonty_mpi.c compton.c init_geometry.c tetrads.c geodesics.c \
 radiation.c jnu_mixed.c hotcross.c track_super_photon.c kappa_sampler.c\
 scatter_super_photon.c sphere_model.c init_sphere_data.c sphere_utils.c

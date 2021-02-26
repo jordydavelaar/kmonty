@@ -164,7 +164,7 @@ double F6(double y, void *params) {
   return value;
 }
 
-double sample_y_distr_nth(double Thetae) {
+double sample_y_distr_kappa(double Thetae) {
   double w = (kappa_synch - 3.)/kappa_synch * Thetae;
   double S_3, pi_3, pi_4, pi_5, pi_6, y, x1, x2, prob;
   double num, den;
@@ -217,4 +217,12 @@ double sample_y_distr_nth(double Thetae) {
   } while (x2 >= prob);
 
   return (y);
+}
+
+double sample_gamma_distr_pwl(){
+double p = pindex;
+double x1 = (double)rand()/(double)RAND_MAX;
+
+return  pow(pow(gmin,1-p)*(1 - x1 ) + x1 * pow(gmax,1-p),1/(1-p));
+
 }
