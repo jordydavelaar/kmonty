@@ -3,7 +3,7 @@
 #
 
 CC = mpicc #/usr/bin/h5pcc
-CCFLAGS = -Wall -std=c99 -xCORE-AVX2 -fopenmp
+CCFLAGS = -Wall -std=c99  -fopenmp -g -O0
 LDFLAGS = -lm -lgsl -lgslcblas
 
 #CC = gcc

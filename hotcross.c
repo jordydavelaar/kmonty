@@ -46,7 +46,7 @@ void init_hotcross(void) {
   lmint = log10(MINT);
 
   fp = fopen(HOTCROSS, "r");
-  if (fp == NULL || KAPPA || MIXED) {
+  if (fp == NULL || KAPPA || MIXED || POWERLAW) {
     for (i = 0; i <= NW; i++)
       for (j = 0; j <= NT; j++) {
 
@@ -264,7 +264,7 @@ double dNdgammae_pwl(double gammae) {
   double p = pindex;
 
   // This is not yet normalized!
-  double dNdgam = (p-1)*pow(gamma,-p)/((pow(gmin,1-p)-pow(gmax,1-p)));
+  double dNdgam = (p-1)*pow(gammae,-p)/((pow(gmin,1-p)-pow(gmax,1-p)));
 
   return dNdgam;
 }

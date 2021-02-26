@@ -23,9 +23,9 @@
 #define MKS 1
 #define CKS 0
 
-#define THERMAL 1
+#define THERMAL 0
 #define KAPPA 0
-#define POWERLAW 0
+#define POWERLAW 1
 #define MIXED 0
 
 #define FOLDING 1

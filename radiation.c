@@ -13,9 +13,7 @@ double anu_synch_powerlaw(double nu, double Ne, double Thetae, double B,
                      double theta) {
 double nuc,sth,X,factor;
 double As;
-double p=3;
-double gmin=25.;
-double gmax=1.e7;
+double p=pindex;
 
 sth = sin(theta);
 nuc = EE * B / (2. * M_PI * ME * CL);
