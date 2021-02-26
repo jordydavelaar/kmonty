@@ -399,6 +399,7 @@ void init_emiss_tables_nth(void) {
   }
   gsl_integration_workspace_free(w);
 
+#if KAPPA
   FILE *input;
   input = fopen("hyper2f1.txt", "r");
   double dummy;
@@ -413,7 +414,7 @@ void init_emiss_tables_nth(void) {
   dlK = 1. / dlK;
   dlT = 1. / dlT;
   fprintf(stderr, "done reading hypergeom2F1.\n\n");
-
+#endif
   return;
 }
 
