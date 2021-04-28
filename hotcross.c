@@ -241,21 +241,20 @@ double kappa_function_int(double beta, void *params) {
 
   double thetae = *(double *)params;
   double kappa = kappa_synch;
-  // double gamma = 1/sqrt(1-beta*beta);
-  // return beta*beta* pow(gamma,5.)*pow(( 1 + ( gamma -
-  // 1)/(kappa*thetae)),-(kappa+1))*exp(-gamma/gamma_max);
+  double  w = (kappa-3.)/kappa * thetae; 
+
   double gamma = exp(beta);
   return gamma * gamma * sqrt(gamma * gamma - 1.) *
-         pow((1 + (gamma - 1) / (kappa * thetae)), -(kappa + 1)) *
+         pow((1 + (gamma - 1) / (kappa * w)), -(kappa + 1)) *
          exp(-gamma / gamma_max);
 }
 
 double dNdgammae_kappa(double thetae, double gammae) {
   double kappa = kappa_synch;
-
+  double  w = (kappa-3.)/kappa * thetae;
   // This is not yet normalized!
   double dNdgam = gammae * sqrt(gammae * gammae - 1.) *
-                  pow((1 + (gammae - 1) / (kappa * thetae)), -(kappa + 1)) *
+                  pow((1 + (gammae - 1) / (kappa * w)), -(kappa + 1)) *
                   exp(-gammae / gamma_max);
   return dNdgam;
 }

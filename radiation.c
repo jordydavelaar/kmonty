@@ -22,7 +22,7 @@ factor = (Ne * pow(EE,2.))/(nu* ME*CL);
 X = nu/(nuc*sth);
 
 As = pow(3.,(p+1)/2.)*(p-1)/(4*(pow(gmin,1-p)-pow(gmax,1-p)));
-As *= gsl_sf_gamma((3*p+12)/12.)*gsl_sf_gamma((3*p+22)/12.)*pow(1./3.*X,-(p+2)/2.);
+As *= gsl_sf_gamma((3*p+2)/12.)*gsl_sf_gamma((3*p+22)/12.)*pow(1./3.*X,-(p+2)/2.);
 
 return As*factor;
 }
