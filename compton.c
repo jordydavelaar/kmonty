@@ -364,23 +364,31 @@ void sample_beta_distr(double Thetae, double *gamma_e, double *beta_e,
 /* checked */
 //                                do {
 
+double w;
+
 #if POWERLAW
   *gamma_e = sample_gamma_distr_pwl();
 #else 
 #if (THERMAL)
   y = sample_y_distr(Thetae);
+  *gamma_e = y * y * Thetae + 1.;
 #elif (KAPPA)
   y = sample_y_distr_kappa(Thetae);
+  w = (kappa_sync -3.)/kappa_sync * Thetae;
+  *gamma_e = y * y * w + 1.;
 #elif (MIXED)
   double x1 = monty_rand();
   if (x1 > perct_thermal && ACCZONE) {
     y = sample_y_distr_kappa(Thetae);
+    w = (kappa_sync -3.)/kappa_sync * Thetae;
+    *gamma_e = y * y * w + 1.;
   } else {
     y = sample_y_distr(Thetae);
-  }
+  *gamma_e = y * y * Thetae + 1.; 
+ }
 #endif
   /* checked */
-  *gamma_e = y * y * Thetae + 1.;
+
 #endif
   //                            } while (*gamma_e > gamma_max);
   if (isnan(*gamma_e))
