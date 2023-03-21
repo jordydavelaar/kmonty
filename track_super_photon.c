@@ -12,7 +12,7 @@
 
 #define MAXNSTEP 2000000
 
-void track_super_photon(struct of_photon *ph) {
+void track_super_photon(struct of_photon *ph, int *N_superph_recorded,int igrid) {
   int bound_flag;
   double dtau_scatt, dtau_abs, dtau;
   double bi, bf;
@@ -28,7 +28,6 @@ void track_super_photon(struct of_photon *ph) {
   int nstep = 0;
   int ACCZONE = 0;
   double dx_local=1e100;
-  int igrid = -1;
 
   // Don't track zero-weight photons
   if (ph->w < 1) {
@@ -56,7 +55,7 @@ void track_super_photon(struct of_photon *ph) {
   dtauK = 2. * M_PI * L_unit / (ME * CL * CL / HBAR);
 
   /* Initialize opacities */
-  gcov_func(ph->X, Gcov);
+  //gcov_func(ph->X, Gcov);
 
   get_fluid_params(ph->X, Gcov, &Ne, &Thetae, &B, &sigma, &beta, Ucon, Ucov,
                    Bcon, Bcov, &ACCZONE, &dx_local, &igrid);
@@ -99,7 +98,7 @@ void track_super_photon(struct of_photon *ph) {
       break;
 
     /* allow photon to interact with matter, */
-    gcov_func(ph->X, Gcov);
+    //gcov_func(ph->X, Gcov);
     get_fluid_params(ph->X, Gcov, &Ne, &Thetae, &B, &sigma, &beta, Ucon, Ucov,
                      Bcon, Bcov, &ACCZONE, &dx_local, &igrid);
 
@@ -191,7 +190,7 @@ void track_super_photon(struct of_photon *ph) {
         ph->E0s = E0;
 
         /* Get plasma parameters at new position */
-        gcov_func(ph->X, Gcov);
+        //gcov_func(ph->X, Gcov);
         get_fluid_params(ph->X, Gcov, &Ne, &Thetae, &B, &sigma, &beta, Ucon,
                          Ucov, Bcon, Bcov, &ACCZONE, &dx_local, &igrid);
 
@@ -203,7 +202,7 @@ void track_super_photon(struct of_photon *ph) {
                             cone */
             return;
           }
-          track_super_photon(&php);
+          track_super_photon(&php,N_superph_recorded, igrid);
         }
 
         theta = get_bk_angle(ph->X, ph->K, Ucov, Bcov, B);
@@ -250,6 +249,7 @@ void track_super_photon(struct of_photon *ph) {
   /* accumulate result in spectrum on escape */
   if (record_criterion(ph) && nstep < MAXNSTEP) {
     record_super_photon(ph);
+    *N_superph_recorded++;
   }
 
   /* done! */

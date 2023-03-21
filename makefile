@@ -2,8 +2,8 @@
 # requires an openmp-enabled version of gcc
 #
 
-CC = mpicc #/usr/bin/h5pcc
-CCFLAGS = -Wall -std=c99 -O2 -fopenmp
+CC = mpiicc #/usr/bin/h5pcc
+CCFLAGS = -Wall -std=c99 -O3 -fopenmp -inline-level=2 -ipo
 LDFLAGS = -lm -lgsl -lgslcblas
 
 #CC = gcc
@@ -29,31 +29,20 @@ radiation.o jnu_mixed.o hotcross.o track_super_photon.o kappa_sampler.o kappa_sa
 scatter_super_photon.o sphere_model.o init_sphere_data.o sphere_utils.o
 
 SRCS2 = main.c compton.c init_geometry.c tetrads.c geodesics.c \
-radiation.c jnu_mixed.c hotcross.c track_super_photon.c kappa_sampler.c\
-scatter_super_photon.c BHAC3D_model.c BHAC3D_utils.c init_BHAC3D_data.c
-
-OBJS2 = main.o compton.o init_geometry.o tetrads.o geodesics.o \
-radiation.o jnu_mixed.o hotcross.o track_super_photon.o kappa_sampler.o\
-scatter_super_photon.o BHAC3D_model.o BHAC3D_utils.o init_BHAC3D_data.o
-
-SRCS3 = main.c compton.c init_geometry.c tetrads.c geodesics.c \
-radiation.c jnu_mixed.c hotcross.c track_super_photon.c kappa_sampler.c\
+radiation.c jnu_mixed.c hotcross.c track_super_photon.c kappa_sampler.c kappa_sampler_num.c\
 scatter_super_photon.c BHAC_AMR_model.c BHAC_AMR_utils.c init_BHAC_AMR_data.c
 
-OBJS3 = main.o compton.o init_geometry.o tetrads.o geodesics.o \
-radiation.o jnu_mixed.o hotcross.o track_super_photon.o kappa_sampler.o\
+OBJS2 = main.o compton.o init_geometry.o tetrads.o geodesics.o \
+radiation.o jnu_mixed.o hotcross.o track_super_photon.o kappa_sampler.o kappa_sampler_num.o\
 scatter_super_photon.o BHAC_AMR_model.o BHAC_AMR_utils.o init_BHAC_AMR_data.o
 
 INCS = decs.h constants.h sphere_model.h
 
 sphere: $(OBJS1) $(INCS) makefile
-	$(CC_LOAD) $(CFLAGS) $(OBJS2) $(LDFLAGS) -o $(EXE)
+	$(CC_LOAD) $(CFLAGS) $(OBJS1) $(LDFLAGS) -o $(EXE)
 
 bhac: $(OBJS2) $(INCS) makefile
-	$(CC_LOAD) $(CFLAGS) $(OBJS3) $(LDFLAGS) -o $(EXE)
-
-amr: $(OBJS3) $(INCS) makefile
-	$(CC_LOAD) $(CFLAGS) $(OBJS4) $(LDFLAGS) -o $(EXE)
+	$(CC_LOAD) $(CFLAGS) $(OBJS2) $(LDFLAGS) -o $(EXE)
 
 
 $(EXE) : $(OBJS) $(INCS) makefile

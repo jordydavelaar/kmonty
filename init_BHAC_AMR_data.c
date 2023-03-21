@@ -337,8 +337,8 @@ void convert2prim(double prim[8], double **conserved, int c, double X[4],
     }
   }
   if (VdotV > 1.) {
-    fprintf(stderr, "VdotV too large in con2prim %e %e %e %e\n", VdotV, Xgrid[1],
-            Xgrid[2], Xgrid[3]);
+    fprintf(stderr, "VdotV too large in con2prim %e %e %e %e\n", VdotV, X[1],
+            X[2], X[3]);
     exit(1);
   }
  
@@ -354,8 +354,7 @@ void convert2prim(double prim[8], double **conserved, int c, double X[4],
                 (1 + neqpar[0] * prim[UU] / prim[KRHO]),
             conserved[XI][c]);
     fprintf(stderr, "rc %e %e\n", r_current, (1. + sqrt(1. - a * a)));
-    fprintf(stderr, "Xbar %e %e %e\n", X[0], X[1], X[2]);
-    fprintf(stderr, "X %e %e %e\n", Xgrid[0], Xgrid[1], Xgrid[2]);
+    fprintf(stderr, "X %e %e %e\n", X[0], X[1], X[2]);
     fprintf(stderr, "dxc %e %e %e\n", dxc[0], dxc[1], dxc[2]);
     //		exit(1);
   }
@@ -366,6 +365,10 @@ void convert2prim(double prim[8], double **conserved, int c, double X[4],
 
 void init_bhac_amr_data(char *fname) {
 
+  int world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+if(world_rank==0)
   fprintf(stderr, "\nReading HEADER...\n");
 
   ng[0] = 1;
@@ -399,7 +402,8 @@ void init_bhac_amr_data(char *fname) {
   file_id = fopen(fname, "rb"); // r for read, b for binary
 
   if (file_id < 0) {
-    fprintf(stderr, "file %s does not exist, aborting...\n", fname);
+    if(world_rank==0)
+       fprintf(stderr, "file %s does not exist, aborting...\n", fname);
     fflush(stderr);
     exit(1234);
   }
@@ -413,32 +417,30 @@ void init_bhac_amr_data(char *fname) {
   fseek(file_id, offset, SEEK_CUR);
 
   fread(buffer_i, sizeof(int), 1, file_id);
-  fprintf(stderr, "nleafs %d %d\n", j, buffer_i[0]);
   nleafs = buffer_i[0];
 
   fread(buffer_i, sizeof(int), 1, file_id);
-  fprintf(stderr, "levmax %d %d\n", j, buffer_i[0]);
   levmaxini = buffer_i[0];
+  fprintf(stderr,"%d\n",levmaxini);
   fread(buffer_i, sizeof(int), 1, file_id);
-  fprintf(stderr, "ndim %d %d\n", j, buffer_i[0]);
   ndimini = buffer_i[0];
+
   fread(buffer_i, sizeof(int), 1, file_id);
-  fprintf(stderr, "ndir %d %d\n", j, buffer_i[0]);
   ndirini = buffer_i[0];
+
   fread(buffer_i, sizeof(int), 1, file_id);
-  fprintf(stderr, "nw %d %d\n", j, buffer_i[0]);
   nwini = buffer_i[0];
+
   fread(buffer_i, sizeof(int), 1, file_id);
-  // printf("nws %d\n",buffer_i[0]);
   nws = buffer_i[0];
+
   fread(buffer_i, sizeof(int), 1, file_id);
-  // fprintf(stderr, "neqpar+nspecialpar %d %d\n",j, buffer_i[0]);
   neqparini = buffer_i[0];
+
   fread(buffer_i, sizeof(int), 1, file_id);
-  // fprintf(stderr, "it %d %d\n",j, buffer_i[0]);
   it = buffer_i[0];
+
   fread(buffer, sizeof(double), 1, file_id);
-  // fprintf(stderr, "t %d %g\n",j, buffer[0]);
   t = buffer[0];
 
   offset = offset - (ndimini * 4 + neqparini * 8);
@@ -450,27 +452,23 @@ void init_bhac_amr_data(char *fname) {
   for (int k = 0; k < ndimini; k++) {
     fread(buffer_i, sizeof(int), 1, file_id);
     nx[k] = buffer_i[0];
-    fprintf(stderr, "block size %d %d\n", k, buffer_i[0]);
   }
   for (int k = 0; k < neqparini; k++) {
     fread(buffer, sizeof(double), 1, file_id);
     neqpar[k] = buffer[0];
-    fprintf(stderr, "eqpar %d %g\n", k, buffer[0]);
   }
-  fprintf(stderr,"neqpar[0] = %e\n",neqpar[0]);
   // a= neqpar[3];
 
   int cells = 1;
   for (int k = 0; k < ndimini; k++) {
     cells *= nx[k];
   }
-  fprintf(stderr, "cells %d\n", cells);
+
   long int size_block = cells * (nwini)*8; // size of a block in bytes
 
   // Read forest
   offset = nleafs * size_block +
            nleafs * (nx[0] + 1) * (nx[1] + 1) * (nx[2] + 1) * nws * 8;
-  fprintf(stderr, "%d\n", cells * nwini * nleafs);
   // exit(1);
   fseek(file_id, 0, SEEK_SET);
   fseek(file_id, offset, SEEK_CUR);
@@ -478,7 +476,6 @@ void init_bhac_amr_data(char *fname) {
 
   for (int i = 0; i < ndimini; i++) {
     ng[i] = nxlone[i] / nx[i]; // number of blocks in each direction
-    printf("%d\n", ng[i]);
   }
 
   int igrid = 0;
@@ -494,40 +491,25 @@ void init_bhac_amr_data(char *fname) {
     for (int j = 0; j < ng[1]; j++) {
       for (int i = 0; i < ng[0]; i++) {
         read_node(file_id, &igrid, &refine, ndimini, level, i, j, k);
-        //				fprintf(stderr,"%d\n",i);
       }
     }
   }
 
-  fprintf(stderr, "%d %d \n", block_info[0].level, igrid);
-  // exit(1);
   double *dx1, *dxc;
   dx1 = (double *)malloc(ndimini * sizeof(double));
   dxc = (double *)malloc(ndimini * sizeof(double));
   // block and cell size on level one.
+
   for (int i = 0; i < ndimini; i++) {
     dx1[i] = (xprobmax[i] - xprobmin[i]) / ng[i];
     dxc[i] = (xprobmax[i] - xprobmin[i]) / nxlone[i];
-    //      fprintf(stderr,"block sizes %d %e\n",i,dxc[i]);
   }
-  // exit(1);
 
   double **values;
   values = (double **)malloc(nwini * sizeof(double *));
   for (int i = 0; i < nwini; i++) {
     values[i] = (double *)malloc(cells * sizeof(double));
   }
-
-  //Xgrid = (double ***)malloc(nleafs * sizeof(double **));
-  //Xbar = (double ***)malloc(nleafs * sizeof(double **));
-  //for (int j = 0; j < nleafs; j++) {
-    //Xgrid[j] = (double **)malloc(cells * sizeof(double *));
-    //Xbar[j] = (double **)malloc(cells * sizeof(double *));
-    //for (int i = 0; i < cells; i++) {
-      //Xgrid[j][i] = (double *)malloc(ndimini * sizeof(double));
-      //Xbar[j][i] = (double *)malloc(ndimini * sizeof(double));
-    //}
-  //}
 
   int h_i = 0, h_j = 0, h_k = 0;
   double del[3];
@@ -539,8 +521,10 @@ void init_bhac_amr_data(char *fname) {
   init_storage();
 
   fseek(file_id, 0, SEEK_SET);
-  fprintf(stderr, "\nReading BODY...\n");
+  if(world_rank==0)
+     fprintf(stderr, "\nReading BODY...\n");
 
+fprintf(stderr,"im here!\n");
   for (int i = 0; i < nleafs; i++) {
       for (int n = 0; n < ndimini; n++) {
       block_info[i].lb[n] = (xprobmin[n] +
@@ -565,7 +549,7 @@ void init_bhac_amr_data(char *fname) {
       }
     }
 
-//#pragma omp parallel for shared(values, p) schedule(static, 1)
+#pragma omp parallel for shared(values, p) schedule(static, 1) private(Xcent)
     for (int c = 0; c < cells; c++) {
        calc_coord(c, nx, ndimini, block_info[i].lb, block_info[i].dxc_block,
                  Xcent);

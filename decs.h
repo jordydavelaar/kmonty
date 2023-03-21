@@ -17,15 +17,15 @@
 #include "constants.h"
 #include <mpi.h>
 
-#define MPI 0
-#define OPENMP 1
+#define MPI 1
+#define OPENMP 0
 
 #define MKS 0
 #define CKS 1 
 
-#define THERMAL 0
+#define THERMAL 1
 #define KAPPA 0
-#define POWERLAW 1
+#define POWERLAW 0
 #define MIXED 0
 
 #define COMPTON 0
@@ -130,13 +130,13 @@ struct of_spectrum {
 
 typedef struct of_spectrum type_spectr;
 
-#define N_ESAMP		200
-#define N_EBINS		200
-#define N_THBINS	180
-#define N_PHIBINS       90
+#define N_ESAMP		100
+#define N_EBINS		100
+#define N_THBINS	3
+#define N_PHIBINS       1
 
-#define N1 (4096)//512
-#define N2 (128) //128
+#define N1 (17288)//512
+#define N2 (4096) //128
 #define N3 (1)
 
 struct of_grid {
@@ -206,7 +206,7 @@ extern double max_tau_scatt, Ladv, dMact, bias_norm;
 
 /** model-independent subroutines **/
 /* core monte carlo/radiative transport routines */
-void track_super_photon(struct of_photon *ph);
+void track_super_photon(struct of_photon *ph, int *N_superph_recorded, int igrid);
 void record_super_photon(struct of_photon *ph);
 void report_spectrum(double N_superph_made);
 void scatter_super_photon(struct of_photon *ph, struct of_photon *php,

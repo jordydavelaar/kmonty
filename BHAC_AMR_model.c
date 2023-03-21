@@ -18,7 +18,12 @@ extern double ***shared_ispec;
 void init_model(char *args[]) {
   set_units(args[3], args[4]);
 
-  fprintf(stderr, "READING DATA\n");
+  int world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+  if(world_rank==0)
+     fprintf(stderr, "READING DATA\n");
+
   init_bhac_amr_data(args[2]);
 
 #pragma omp parallel
@@ -55,17 +60,23 @@ void init_model(char *args[]) {
   Rh = 1 + sqrt(1. - a * a);
 
   init_geometry();
-  fprintf(stderr, "init geom done\n");
+  if(world_rank==0)
+    fprintf(stderr, "init geom done\n");
   /* make look-up table for hot cross sections */
   init_hotcross();
-  fprintf(stderr, "hot cross done\n");
+  if(world_rank==0) 
+     fprintf(stderr, "hot cross done\n");
+  
   /* make table for solid angle integrated emissivity and K2 */
   init_emiss_tables();
-  fprintf(stderr, "emiss tables done\n");
+  if(world_rank==0)  
+     fprintf(stderr, "emiss tables done\n");
 
   /* make table for superphoton weights */
   init_weight_table();
-  fprintf(stderr, "weight tables done\n");
+
+  if(world_rank==0)
+     fprintf(stderr, "weight tables done\n");
 
   /* make table for quick evaluation of ns_zone */
   init_nint_table();
@@ -109,14 +120,14 @@ double bias_func(double Te, double w) {
 
   double bias;
 
-  bias = 100. * Te * Te / bias_norm;
+  bias =  0.1*Te * Te / bias_norm;
 #pragma omp atomic
   bias /= max_tau_scatt;
-  if (bias < 1)
-    bias = 1.;
-  if (bias > 3000.0)
-    bias = 3000.0;
-  return 0; // bias;
+//  if (bias < 1)
+//    bias = 1.;
+//  if (bias > 3000.0)
+//    bias = 3000.0;
+  return bias;
   /* double bias,max,c,avg_num_scatt;
      avg_num_scatt = 2.+N_scatt / (1. * N_superph_recorded + 1.);
 
@@ -144,11 +155,12 @@ double bias_func(double Te, double w) {
 
  */
 
-int find_igrid(double x[4], struct block *block_info) {
+int find_igrid(double x[4], struct block *block_info, int igrid_cur) {
   int igrid = 0;
   double small = 1e-9;
 
-  for (int igrid = 0; igrid < nleafs; igrid++) {
+  for (int igrid=0; igrid<nleafs ; igrid++) {
+
     if (x[1] + small >= block_info[igrid].lb[0] &&
         x[1] + small <
             block_info[igrid].lb[0] +
@@ -234,8 +246,8 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
       *dx_local=1e100;
 	return 1;
   }
-  gcon_func(Xcent,gcon); // cell centered, nearest neighbour so need metric at cell position
-  gcov_func(Xcent, gcov);
+//  gcon_func(Xcent,gcon); // cell centered, nearest neighbour so need metric at cell position
+//  gcov_func(Xcent, gcov);
 
   // inteprolatie van je primitieve variabelen
   rho = p[KRHO][igrid][c][0];
@@ -255,14 +267,14 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
   double gamma_dd[4][4];
   for (int i = 1; i < 4; i++) {
     for (int j = 1; j < 4; j++) {
-      gamma_dd[i][j] = gcov[i][j]; // + gcon[0][i]*gcon[0][j]/(-gcon[0][0]);
+      gamma_dd[i][j] = geom[igrid][c].gcov[i][j]; // + gcon[0][i]*gcon[0][j]/(-gcon[0][0]);
     }
   }
   double shift[4];
   for (int j = 1; j < 4; j++) {
-    shift[j] = gcon[0][j] / (-gcon[0][0]);
+    shift[j] = geom[igrid][c].gcon[0][j] / (-geom[igrid][c].gcon[0][0]);
   }
-  double alpha = 1 / sqrt(-gcon[0][0]);
+  double alpha = 1 / sqrt(-geom[igrid][c].gcon[0][0]);
   VdotV = 0.;
   Ucon[0] = 0.;
   for (int i = 1; i < NDIM; i++) {
@@ -284,7 +296,7 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
     Ucon[i] = Vcon[i] * lfac - shift[i] * lfac / alpha;
   }
 
-  lower(Ucon, gcov, Ucov);
+  lower(Ucon, geom[igrid][c].gcov, Ucov);
  /* double sum=0;
   for(int i; i < NDIM; i++){
 	sum+=Ucon[i]*Ucov[i];
@@ -302,7 +314,7 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
     Bcon[i] = 0;
     Bcon[i] = (Bp[i] + alpha * Bcon[0] * Ucon[i]) / lfac;
   }
-  lower(Bcon, gcov, Bcov);
+  lower(Bcon, geom[igrid][c].gcov, Bcov);
 
   // sterkte van het magneetveld
   *B = sqrt(fabs(Bcon[0] * Bcov[0] + Bcon[1] * Bcov[1] + Bcon[2] * Bcov[2] +
@@ -332,9 +344,9 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
     fprintf(stderr, "B isnan gVcon %e %e %e\n", gVcon[1], gVcon[2], gVcon[3]);
     fprintf(stderr, "B isnan Vcon %e %e %e\n", Vcon[1], Vcon[2], Vcon[3]);
     fprintf(stderr, "B isnan VdotV %e\n", VdotV);
-    fprintf(stderr, "B isnan lapse %e\n", sqrt(-gcon[0][0]));
-    fprintf(stderr, "B isnan shift %e %e %e\n", gcon[0][1], gcon[0][2],
-            gcon[0][3]);
+    fprintf(stderr, "B isnan lapse %e\n", sqrt(-geom[igrid][c].gcon[0][0]));
+    fprintf(stderr, "B isnan shift %e %e %e\n", geom[igrid][c].gcon[0][1], geom[igrid][c].gcon[0][2],
+            geom[igrid][c].gcon[0][3]);
     exit(1);
   }
 #endif
@@ -349,19 +361,6 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
 
   double beta_max = 1 / (4. * (*sigma));
   double trat = 3.;//trat_d * b2 / (1. + b2) + trat_j / (1. + b2);
-
-  double Bern = -(1. + uu / rho * gam) * Ucov[0];
-  double betaf =
-      sqrt(Ucon[1] * Ucon[1] + Ucon[2] * Ucon[2] + Ucon[3] * Ucon[3]) /
-      Ucon[0]; // sqrt(Ucon[1]*Ucov[1]);// + Ucon[2]*Ucov[2] + Ucon[3]*Ucov[3]
-               // ); //fabs(Ucon[1]*exp(X[1])/Ucon[0]);
-  if (betaf < 0)
-    betaf = 0;
-  double lor = 1 / sqrt(1 - betaf * betaf); // sqrt(lor*lor-1.)/lor;
-
-  double cs2 = gam * uu * (gam - 1.) / (rho + uu * gam);
-  double gammacs = 1 / sqrt(1 - cs2);
-  double Mach = lor * betaf / (gammacs * sqrt(cs2)); // sigma;
 
   double two_temp_gam =
       0.5 * ((1. + 2. / 3. * (trat + 1.) / (trat + 2.)) + gam);
@@ -417,7 +416,7 @@ int get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
       X[3] + small >
           block_info[igrid].lb[2] +
               (block_info[igrid].size[2]) * block_info[igrid].dxc_block[2]) {
-    *igrid_c = find_igrid(X, block_info);
+    *igrid_c = find_igrid(X, block_info,igrid);
     igrid = *igrid_c;
   }
   if (igrid == -1) {
@@ -947,8 +946,8 @@ double stepsize(double X_u[4], double U_u[4], double dx_local) {
   double r2 =
       (R2 - a2 + sqrt((R2 - a2) * (R2 - a2) + 4. * a2 * X_u[3] * X_u[3])) *
       0.5;
+
   r= sqrt(r2);
-  double theta = atan2(X_u[1], X_u[2]) / M_PI;
 
   double dlx1 = EPS / (fabs(U_u[1]) + SMALL * SMALL);
   double dlx2 = EPS / (fabs(U_u[2]) + SMALL * SMALL);
@@ -960,14 +959,19 @@ double stepsize(double X_u[4], double U_u[4], double dx_local) {
 
   double maxU = fmax(fmax(fabs(U_u[1]), fabs(U_u[2])), fabs(U_u[3]));
 
+  double step;
+
+if(r<40){
   double step_grid =  dx_local / 2. / maxU;
 
-  double step = fmin((r/1.) / (idlx1 + idlx2 + idlx3), step_grid); //
-  //  return -(1. / (idlx1 + idlx2 + idlx3) + SMALL);
- //if(r>75)
-//	step = exp(sqrt(r/75.)) / (idlx1 + idlx2 + idlx3);
+  step = fmin((r2) / (idlx1 + idlx2 + idlx3), step_grid); //
+}
+
+else
+  step = (r2) / (idlx1 + idlx2 + idlx3);
+
   return step;
-  // else return STEPSIZE;
+
 }
 
 /*

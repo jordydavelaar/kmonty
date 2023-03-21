@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
         // Get the number of processes
         int world_size;
         MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
+	Ns/=world_size;
         // Get the rank of the process
         int world_rank;
         MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
         // Print off a hello world message
 
         if(world_rank==0) {
-                fprintf(stderr,"\nBOOTING UP MPI-spec\n\n");
+                fprintf(stderr,"\nBOOTING UP kmonty\n\n");
         }
         MPI_Barrier(MPI_COMM_WORLD);
 
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
         MPI_Barrier(MPI_COMM_WORLD);
 
         if(world_rank==0) {
-                fprintf(stderr,"\nMPI-spec running\n\n");
+                fprintf(stderr,"\n kmonty running\n\n");
         }
 
         myid = world_rank;
@@ -212,7 +212,8 @@ int main(int argc, char *argv[])
                                 break;
 
                         /* push them around */
-                        track_super_photon(&ph);
+                        int igrid=-1;
+			track_super_photon(&ph,&N_superph_recorded,igrid);
 
                         /* step */
 #if OPENMP
@@ -223,7 +224,7 @@ int main(int argc, char *argv[])
                         /* give interim reports on rates */
 #if MPI
                         if (((int) (N_superph_made_local)) % 1000 == 0
-                            && N_superph_made_local*world_size > 0 && world_rank==0){
+                            && N_superph_recorded*world_size > 0 && world_rank==0){
                                 currtime = time(NULL);
                                 fprintf(stderr, "time %g, rate %g ph/s\n",
                                         (double) (currtime - starttime),
@@ -275,7 +276,8 @@ int main(int argc, char *argv[])
         if(world_rank==0) {
                 fprintf(stderr, "Final time %g, rate %g ph/s\n",
                         (double) (currtime - starttime),
-                        N_superph_made / (currtime - starttime));
+                         (double) N_superph_recorded_total / (currtime - starttime));
+                fprintf(stderr, "Made %d Recorded %d\n", N_superph_made, N_superph_recorded_total);
                 report_spectrum(N_superph_made);
         }
         // Finalize the MPI environment.
