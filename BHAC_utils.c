@@ -589,11 +589,14 @@ void init_geometry() {
 
 double dOmega_func(double x2i, double x2f, double x3i, double x3f) {
     double dO;
-
-    dO = (x3f - x3i) * (-cos(M_PI * x2f) + cos(M_PI * x2i)
-                        //- cos(th_beg + M_PI*x2f + hslope*sin(2.*M_PI*x2f))
-                        //+ cos(th_beg + M_PI*x2i + hslope*sin(2.*M_PI*x2i))
-                       );
+#if(CKS)
+    dO = (x3f - x3i) * (-cos(M_PI * x2f) + cos(M_PI * x2i) );
+#elif(MKS)             
+	dO = (x3f - x3i) *
+	    (-cos(M_PI * x2f + 0.5 * (hslope) * sin(2 * M_PI * x2f))
+	     + cos(M_PI * x2i + 0.5 * (hslope) * sin(2 * M_PI * x2i))
+	    );
+#endif                    
 
     return (dO);
 }

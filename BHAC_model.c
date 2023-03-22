@@ -3,8 +3,8 @@
 /*
    HARM model specWification routines
  */
-#include "decs.h"
 #include "BHAC_model.h"
+#include "decs.h"
 
 struct of_spectrum ***spect;
 extern struct of_spectrum ***shared_spect;
@@ -16,7 +16,6 @@ extern double ***shared_ispec;
 int LFAC, XI;
 
 int N1, N2, N3;
-
 
 #pragma omp threadprivate(spect, Xi_spec, ispec)
 
@@ -128,7 +127,7 @@ double bias_func(double Te, double w) {
     bias = 100. * Te * Te / bias_norm;
 #pragma omp atomic
     bias /= max_tau_scatt;
-      if (bias < 1)
+    if (bias < 1)
         bias = 1.;
     //  if (bias > 3000.0)
     //    bias = 3000.0;
@@ -237,10 +236,9 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
 
     *dx_local = block_info[igrid].dxc_block[0];
 
-   double r  = get_r(Xcent);
+    double r = get_r(Xcent);
 
-    if (r < 1 + sqrt(1 - a * a) || r > 40. ||
-        r < 2) { 
+    if (r < 1 + sqrt(1 - a * a) || r > 40. || r < 2) {
         *Ne = 0;
         *B = 0;
         *Thetae = 0;
@@ -372,8 +370,7 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
 
     *Thetae = (uu / rho) * Thetae_unit;
 
-    if (*sigma > 1.0 || r < 2.0 ||
-        r > 40) { 
+    if (*sigma > 1.0 || r < 2.0 || r > 40) {
         *Ne = 0;
         *B = 0;
         *Thetae = 0;
@@ -482,7 +479,6 @@ int get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
         }
     }
 
-
     double lfac = sqrt(gVdotgV + 1.);
 
     Vcon[1] = gVcon[1] / lfac;
@@ -547,11 +543,11 @@ int get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
 
     double b2 = pow(uu * (gam - 1.) / (0.5 * (Bsq + smalll) * beta_trans), 2.);
 
-    *sigma = Bsq / (rho); 
+    *sigma = Bsq / (rho);
 
     double beta_max = 1 / (4 * (*sigma));
     double trat = trat_d * b2 / (1. + b2) + trat_j / (1. + b2);
-        
+
     double two_temp_gam =
         0.5 * ((1. + 2. / 3. * (trat + 1.) / (trat + 2.)) + gam);
 
@@ -559,8 +555,7 @@ int get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
 
     *Thetae = (uu / rho) * Thetae_unit;
 
-    if (*sigma > 1.0 || r < 2.0 ||
-        r > 40) { 
+    if (*sigma > 1.0 || r < 2.0 || r > 40) {
         *Ne = 0;
         *Thetae = 0;
         *B = 0;
@@ -599,9 +594,9 @@ double get_r(double X[4]) {
 void gcon_func(double *X, double gcon[][NDIM]) {
 
 #if (MKS)
-    for(int i=0;i<4;i++)
-       	for(int j=0;j<4;j++)
-               	gcon[i][j]=0;
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            gcon[i][j] = 0;
 
     double r = exp(X[1]);
     double theta = X[2] + 0.5 * hslope * sin(2. * X[2]);
@@ -644,13 +639,13 @@ void gcon_func(double *X, double gcon[][NDIM]) {
         isig = 1 / sig;
     idel = 1 / (del);
 
-    double f = 2. * r2 * r * isig; 
+    double f = 2. * r2 * r * isig;
 
     double l[4];
 
     l[0] = -1.;
-    l[1] = (r * X[1] + a * X[2]) * idel; 
-    l[2] = (r * X[2] - a * X[1]) * idel; 
+    l[1] = (r * X[1] + a * X[2]) * idel;
+    l[2] = (r * X[2] - a * X[1]) * idel;
     l[3] = (X[3]) / (r);
 
     for (i = 0; i < 4; i++) {
@@ -670,9 +665,9 @@ void gcon_func(double *X, double gcon[][NDIM]) {
 void gcov_func(double *X, double gcov[][NDIM]) {
 
 #if (MKS)
-    for(int i=0;i<4;i++)
-	for(int j=0;j<4;j++)
-		gcov[i][j]=0;
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            gcov[i][j] = 0;
 
     double r = exp(X[1]);
     double theta = X[2] + 0.5 * hslope * sin(2. * X[2]);
@@ -703,7 +698,6 @@ void gcov_func(double *X, double gcov[][NDIM]) {
     gcov[3][3] =
         sin2th * (rho2 + a * a * sin2th * (1. + 2. * r / rho2)) * pfac * pfac;
 
-
 #elif (CKS)
     int i, j, k;
     double R2 = X[1] * X[1] + X[2] * X[2] + X[3] * X[3];
@@ -722,11 +716,12 @@ void gcov_func(double *X, double gcov[][NDIM]) {
         isig = 1 / sig;
     idel = 1 / (del);
 
-    double f = 2. * r2 * r * isig;     double l[4];
+    double f = 2. * r2 * r * isig;
+    double l[4];
 
     l[0] = 1;
-    l[1] = (r * X[1] + a * X[2]) * idel; 
-    l[2] = (r * X[2] - a * X[1]) * idel; 
+    l[1] = (r * X[1] + a * X[2]) * idel;
+    l[2] = (r * X[2] - a * X[1]) * idel;
     l[3] = (X[3]) / (r);
 
     for (i = 0; i < 4; i++) {
@@ -957,7 +952,7 @@ double stepsize(double X_u[4], double U_u[4], double dx_local) {
 void record_super_photon(struct of_photon *ph) {
     int iE, ix2, ix3, ii, jj, kk;
     double lE, dx2, dx3;
-
+    double r, theta, phi;
     if (isnan(ph->w) || isnan(ph->E)) {
         fprintf(stderr, "record isnan: %g %g\n", ph->w, ph->E);
         return;
@@ -977,14 +972,24 @@ void record_super_photon(struct of_photon *ph) {
        else
        ix2 = (int) ((stopx[2] - ph->X[2]) / dx2);
      */
-    double r = get_r(ph->X);
-    double theta = (acos(ph->X[3] / r));
-    double phi = fmod(atan2(ph->X[2], ph->X[1]), 2 * M_PI);
+#if (CKS)
+    r = get_r(ph->X);
+    theta = (acos(ph->X[3] / r));
+    phi = fmod(atan2(ph->X[2], ph->X[1]), 2 * M_PI);
+    if (phi < 0)
+        phi += 2 * M_PI;
+    if (theta < 0 || theta > M_PI)
+        fprintf(stderr, "issue with theta %e\n", theta);
+#elif (MKS)
+    r = get_r(ph->X);
+    theta = ph->X[2] + 0.5 * hslope * sin(2 * ph->X[2]);
+    phi = fmod(ph->X[3], 2 * M_PI);
     if (phi < 0)
         phi += 2 * M_PI;
     if (theta < 0 || theta > M_PI)
         fprintf(stderr, "issue with theta %e\n", theta);
 
+#endif
     /***************************************************/
     /*  get theta bin, without folding around equator   */
     dx2 = (M_PI) / ((double)N_THBINS);
