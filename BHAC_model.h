@@ -43,9 +43,13 @@
 
 /* Global variables and function prototypes for harm(2d) models */
 
+#include "decs.h"
+
 #ifndef global
 #define global extern
 #endif
+
+#define NSPIN 3
 
 double ****p;
 

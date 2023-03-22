@@ -1,5 +1,5 @@
-#include "BHAC_model.h"
 #include "decs.h"
+#include "BHAC_model.h"
 #include <stdio.h>
 #include <stdlib.h>
 /* HDF5 v1.6 API */
@@ -8,8 +8,6 @@
 /* HDF5 v1.8 API */
 
 extern double ****p;
-
-
 
 void new_index(int dims, int i, int *new_i, int *new_j, int *new_k, int ip,
                int jp, int kp) {
@@ -424,29 +422,6 @@ void init_bhac_amr_data(char *fname) {
     if (world_rank == 0)
         fprintf(stderr, "\nReading HEADER...\n");
 
-    ng[0] = 1;
-    ng[1] = 1;
-    ng[2] = 1;
-    nxlone[0] = 96;
-    nxlone[1] = 96;
-    nxlone[2] = 192;
-
-    xprobmax[0] = 500;
-    xprobmax[1] = 500.;
-    xprobmax[2] = 1000.;
-
-    xprobmin[0] = -500.;
-    xprobmin[1] = -500.;
-    xprobmin[2] = -1000.;
-
-    startx[1] = -500;
-    stopx[1] = 500;
-    startx[2] = -500;
-    stopx[2] = 500;
-    startx[3] = -1000;
-    stopx[3] = 1000;
-
-    a = 0.9375;
 
     double buffer[1];
     unsigned int buffer_i[1];
@@ -510,6 +485,68 @@ void init_bhac_amr_data(char *fname) {
         fread(buffer, sizeof(double), 1, file_id);
         neqpar[k] = buffer[0];
     }
+
+    a = neqpar[NSPIN];
+
+
+    FILE *inputgrid;
+
+    if (CKS)
+        inputgrid = fopen("grid_cks.in", "r");
+    else if (MKS)
+        inputgrid = fopen("grid_mks.in", "r");
+    else {
+        fprintf(stderr, "metric not supported\n");
+        exit(1);
+    }
+
+    if (inputgrid == NULL) {
+        printf("Cannot read input file");
+        exit(1);
+    }
+
+    char temp[100], temp2[100];
+
+    // Model parameters
+    fscanf(inputgrid, "%s %s %d", temp, temp2, &nxlone[0]);
+    fscanf(inputgrid, "%s %s %d", temp, temp2, &nxlone[1]);
+    if (ndimini == 3)
+        fscanf(inputgrid, "%s %s %d", temp, temp2, &nxlone[2]);
+
+    fscanf(inputgrid, "%s %s %lf", temp, temp2, &xprobmin[0]);
+    fscanf(inputgrid, "%s %s %lf", temp, temp2, &xprobmin[1]);
+    if (ndimini == 3)
+        fscanf(inputgrid, "%s %s %lf", temp, temp2, &xprobmin[2]);
+
+    fscanf(inputgrid, "%s %s %lf", temp, temp2, &xprobmax[0]);
+    fscanf(inputgrid, "%s %s %lf", temp, temp2, &xprobmax[1]);
+    if (ndimini == 3)
+        fscanf(inputgrid, "%s %s %lf", temp, temp2, &xprobmax[2]);
+
+    fscanf(inputgrid, "%s %s %lf", temp, temp2, &hslope);
+
+    fclose(inputgrid);
+
+    if (MKS) {
+        xprobmin[1] *= 2. * M_PI;
+        xprobmin[2] *= 2. * M_PI;
+
+        xprobmax[1] *= 2. * M_PI;
+        xprobmax[2] *= 2. * M_PI;
+    }
+
+    ng[0] = 1;
+    ng[1] = 1;
+    ng[2] = 1;
+
+    startx[1] = xprobmin[0];
+    startx[2] = xprobmin[1];
+    startx[3] = xprobmin[2];
+
+    stopx[1] = xprobmax[0];
+    stopx[2] = xprobmax[1];
+    stopx[3] = xprobmax[2];
+
     // a= neqpar[3];
 
     int cells = 1;
@@ -538,9 +575,6 @@ void init_bhac_amr_data(char *fname) {
     block_info = (struct block *)malloc(0);
 
     forest = (int *)malloc(sizeof(int));
-
-
-
 
     int level = 1;
 #if (SFC)
