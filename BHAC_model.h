@@ -93,3 +93,5 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B, 
 void calc_coord(int c, int *nx, int ndimini, double *lb, double *dxc_block, double *X);
 void gcov_func(double *X, double gcov[][NDIM]);
 void gcon_func(double *X, double gcon[][NDIM]);
+
+double get_r(double X[4]);
