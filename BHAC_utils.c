@@ -1,6 +1,6 @@
 
-#include "BHAC_model.h"
 #include "decs.h"
+#include "BHAC_model.h"
 
 extern double ****p;
 extern struct of_geom **geom;
@@ -79,7 +79,7 @@ void init_weight_table(void) {
             for (j = 0; j < N2; j++)
                 for (k = 0; k < N3; k++) {
                     igrid = i;
-                    get_fluid_zone(i, j, k, &Ne, &Thetae, &B, &sigma, &beta,
+                   get_fluid_zone(i, j, k, &Ne, &Thetae, &B, &sigma, &beta,
                                    Ucon, Bcon, &ACCZONE, &dx_local, &igrid);
                     sfac = dx_local * dx_local * dx_local * L_unit * L_unit *
                            L_unit;
@@ -129,7 +129,6 @@ void init_weight_table(void) {
     // #pragma omp parallel for schedule(static) private(i)
     for (i = 0; i <= N_ESAMP; i++) {
         wgt[i] = log(sum[i] / (HPL * Ns) + WEIGHT_MIN);
-        fprintf(stderr, "wgt %e sum %e Ns %ld\n", wgt[i], sum[i], Ns);
     }
     fflush(stderr);
     return;

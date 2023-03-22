@@ -43,8 +43,6 @@
 
 /* Global variables and function prototypes for harm(2d) models */
 
-#include "decs.h"
-
 #ifndef global
 #define global extern
 #endif
@@ -53,6 +51,8 @@
 
 double ****p;
 
+extern int LFAC;
+extern int XI;
 
 global double stopx[4], startx[4],dx[4];
 global double a;

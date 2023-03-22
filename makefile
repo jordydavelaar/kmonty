@@ -34,7 +34,7 @@ scatter_super_photon.c BHAC_model.c BHAC_utils.c init_BHAC_data.c
 
 OBJS2 = main.o compton.o init_geometry.o tetrads.o geodesics.o \
 radiation.o jnu_mixed.o hotcross.o track_super_photon.o kappa_sampler.o kappa_sampler_num.o\
-scatter_super_photon.o BHAC_AMR_model.o BHAC_AMR_utils.o init_BHAC_AMR_data.o
+scatter_super_photon.o BHAC_model.o BHAC_utils.o init_BHAC_data.o
 
 INCS = decs.h constants.h sphere_model.h
 

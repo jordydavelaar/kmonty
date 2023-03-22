@@ -3,8 +3,8 @@
 /*
    HARM model specWification routines
  */
-#include "BHAC_model.h"
 #include "decs.h"
+#include "BHAC_model.h"
 
 struct of_spectrum ***spect;
 extern struct of_spectrum ***shared_spect;
@@ -12,6 +12,11 @@ double ***Xi_spec;
 extern double ***shared_Xi_spec;
 double ***ispec;
 extern double ***shared_ispec;
+
+int LFAC, XI;
+
+int N1, N2, N3;
+
 
 #pragma omp threadprivate(spect, Xi_spec, ispec)
 
@@ -120,11 +125,11 @@ double bias_func(double Te, double w) {
 
     double bias;
 
-    bias = 0.1 * Te * Te / bias_norm;
+    bias = 100. * Te * Te / bias_norm;
 #pragma omp atomic
     bias /= max_tau_scatt;
-    //  if (bias < 1)
-    //    bias = 1.;
+      if (bias < 1)
+        bias = 1.;
     //  if (bias > 3000.0)
     //    bias = 3000.0;
     return bias;
@@ -203,7 +208,7 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
     int c;
     double del[NDIM];
     double rho, uu;
-    double Bp[NDIM], gVcon[NDIM], Vcon[NDIM], Vfac, VdotV, UdotBp;
+    double Bp[NDIM], gVcon[NDIM], Vcon[NDIM], Vfac, gVdotgV, UdotBp;
     double gcon[NDIM][NDIM], gcov[NDIM][NDIM];
     double Ucov[NDIM], Bcov[NDIM];
 
@@ -232,14 +237,10 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
 
     *dx_local = block_info[igrid].dxc_block[0];
 
-    double R2 = Xcent[1] * Xcent[1] + Xcent[2] * Xcent[2] + Xcent[3] * Xcent[3];
-    double a2 = a * a;
-    double r2 = (R2 - a2 +
-                 sqrt((R2 - a2) * (R2 - a2) + 4. * a2 * Xcent[3] * Xcent[3])) *
-                0.5;
+   double r  = get_r(Xcent);
 
-    if (sqrt(r2) < 1 + sqrt(1 - a * a) || sqrt(r2) > 40. ||
-        sqrt(r2) < 2) { // || !(rho > 1.0e-5*pow(sqrt(r2),-1.5))){
+    if (r < 1 + sqrt(1 - a * a) || r > 40. ||
+        r < 2) { 
         *Ne = 0;
         *B = 0;
         *Thetae = 0;
@@ -260,9 +261,9 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
     Bp[2] = p[B2][igrid][c][0]; // interp_scalar_3d(p[B2], i, j,k, del);
     Bp[3] = p[B3][igrid][c][0]; // interp_scalar_3d(p[B3], i, j,k, del);
 
-    Vcon[1] = p[U1][igrid][c][0];
-    Vcon[2] = p[U2][igrid][c][0];
-    Vcon[3] = p[U3][igrid][c][0];
+    gVcon[1] = p[U1][igrid][c][0];
+    gVcon[2] = p[U2][igrid][c][0];
+    gVcon[3] = p[U3][igrid][c][0];
 
     double gamma_dd[4][4];
     for (int i = 1; i < 4; i++) {
@@ -277,21 +278,20 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
         shift[j] = geom[igrid][c].gcon[0][j] / (-geom[igrid][c].gcon[0][0]);
     }
     double alpha = 1 / sqrt(-geom[igrid][c].gcon[0][0]);
-    VdotV = 0.;
+    gVdotgV = 0.;
     Ucon[0] = 0.;
     for (int i = 1; i < NDIM; i++) {
         for (int j = 1; j < NDIM; j++) {
-            VdotV += gamma_dd[i][j] * Vcon[i] * Vcon[j];
+            gVdotgV += gamma_dd[i][j] * gVcon[i] * gVcon[j];
         }
     }
-    double lfac = 1 / sqrt(1 - VdotV);
 
-    if (VdotV > 1.) {
-        fprintf(stderr, "VdotV too large in zone %e %d %e %d %d %e %e\n", VdotV,
-                igrid, sqrt(r2), nx[0], ndimini, Xcent[0], Xcent[1]);
-        exit(1);
-    }
-    double gamma = 1 / sqrt(1 - VdotV);
+    double lfac = sqrt(gVdotgV + 1.);
+
+    Vcon[1] = gVcon[1] / lfac;
+    Vcon[2] = gVcon[2] / lfac;
+    Vcon[3] = gVcon[3] / lfac;
+
     Ucon[0] = lfac / alpha;
 
     for (int i = 1; i < NDIM; i++) {
@@ -335,7 +335,7 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
             (R2 - a2 +
              sqrt((R2 - a2) * (R2 - a2) + 4. * a2 * Xcent[2] * Xcent[2])) *
             0.5;
-        fprintf(stderr, "B isnan r %e rmin %e\n", sqrt(r2), cutoff_inner);
+        fprintf(stderr, "B isnan r %e rmin %e\n", r, cutoff_inner);
         fprintf(stderr, "B isnan X %e %e %e %e\n", X[0], X[1], X[2], X[3]);
         fprintf(stderr, "B isnan Xgrid %e %e %e\n", Xcent[0], Xcent[1],
                 Xcent[2]);
@@ -372,8 +372,8 @@ void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
 
     *Thetae = (uu / rho) * Thetae_unit;
 
-    if (*sigma > 1.0 || sqrt(r2) < 2.0 ||
-        sqrt(r2) > 40) { // || !(rho > 1.0e-5*pow(sqrt(r2),-1.5))){
+    if (*sigma > 1.0 || r < 2.0 ||
+        r > 40) { 
         *Ne = 0;
         *B = 0;
         *Thetae = 0;
@@ -392,7 +392,7 @@ int get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
     int i, j, k, c;
     double del[NDIM];
     double rho, uu;
-    double Bp[NDIM], gVcon[NDIM], Vcon[NDIM], Vfac, VdotV, UdotBp;
+    double Bp[NDIM], gVcon[NDIM], Vcon[NDIM], Vfac, gVdotgV, UdotBp;
     double gcon[NDIM][NDIM];
     //  *IN_VOLUME = 1;
 
@@ -436,7 +436,8 @@ int get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
     calc_coord(c, nx, ndimini, block_info[igrid].lb,
                block_info[igrid].dxc_block, Xcent);
 
-    double r = get_r(Xcent);
+    double r = get_r(X);
+
     if (r < Rh || r > 75) {
         *Ne = 0;
         *B = 0;
@@ -458,9 +459,9 @@ int get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
     Bp[2] = p[B2][igrid][c][0];
     Bp[3] = p[B3][igrid][c][0];
 
-    Vcon[1] = p[U1][igrid][c][0];
-    Vcon[2] = p[U2][igrid][c][0];
-    Vcon[3] = p[U3][igrid][c][0];
+    gVcon[1] = p[U1][igrid][c][0];
+    gVcon[2] = p[U2][igrid][c][0];
+    gVcon[3] = p[U3][igrid][c][0];
 
     double gamma_dd[4][4];
     for (int i = 1; i < 4; i++) {
@@ -473,21 +474,21 @@ int get_fluid_params(double X[NDIM], double gcov[NDIM][NDIM], double *Ne,
         shift[j] = gcon[0][j] / (-gcon[0][0]);
     }
     double alpha = 1 / sqrt(-gcon[0][0]);
-    VdotV = 0.;
+    gVdotgV = 0.;
     Ucon[0] = 0.;
     for (int i = 1; i < NDIM; i++) {
         for (int j = 1; j < NDIM; j++) {
-            VdotV += gamma_dd[i][j] * Vcon[i] * Vcon[j];
+            gVdotgV += gamma_dd[i][j] * Vcon[i] * Vcon[j];
         }
     }
-    double lfac = 1 / sqrt(1 - VdotV);
 
-    if (VdotV > 1.) {
-        fprintf(stderr, "VdotV too large in params %e %d %e\n", VdotV, igrid,
-                r);
-        exit(1);
-    }
-    double gamma = 1 / sqrt(1 - VdotV);
+
+    double lfac = sqrt(gVdotgV + 1.);
+
+    Vcon[1] = gVcon[1] / lfac;
+    Vcon[2] = gVcon[2] / lfac;
+    Vcon[3] = gVcon[3] / lfac;
+
     Ucon[0] = lfac / alpha;
 
     for (int i = 1; i < NDIM; i++) {
@@ -598,33 +599,32 @@ double get_r(double X[4]) {
 void gcon_func(double *X, double gcon[][NDIM]) {
 
 #if (MKS)
+    for(int i=0;i<4;i++)
+       	for(int j=0;j<4;j++)
+               	gcon[i][j]=0;
+
     double r = exp(X[1]);
-    double theta = X[2] + 0.5 * (1. - hslope) * sin(2. * X[2]);
+    double theta = X[2] + 0.5 * hslope * sin(2. * X[2]);
 
     double sinth = sin(theta);
     double sin2th = sinth * sinth;
     double costh = cos(theta);
-    double tfac, rfac, hfac, pfac;
-    double rho2 = r * r + a * a * costh * costh;
 
-    tfac = 1.;
-    rfac = r;
-    hfac = 1 + (1. - hslope) * cos(2. * X[2]);
-    pfac = 1.;
+    double irho2 = 1. / (r * r + a * a * costh * costh);
 
-    gcon[0][0] = (-1. + 2. * r / rho2) * tfac * tfac;
-    gcon[0][1] = (2. * r / rho2) * tfac * rfac;
-    gcon[0][3] = (-2. * a * r * sin2th / rho2) * tfac * pfac;
+    double hfac = 1. + hslope * cos(2. * X[2]);
+
+    gcon[0][0] = -1. - 2. * r * irho2;
+    gcon[0][1] = 2. * irho2;
+
     gcon[1][0] = gcon[0][1];
-    gcon[1][1] = (1. + 2. * r / rho2) * rfac * rfac;
-    gcon[1][3] = (-a * sin2th * (1. + 2. * r / rho2)) * rfac * pfac;
+    gcon[1][1] = irho2 * (r * (r - 2.) + a * a) / (r * r);
+    gcon[1][3] = a * irho2 / r;
 
-    gcon[2][2] = rho2 * hfac * hfac;
+    gcon[2][2] = irho2 / (hfac * hfac);
 
-    gcon[3][0] = gcon[0][3];
     gcon[3][1] = gcon[1][3];
-    gcon[3][3] =
-        sin2th * (rho2 + a * a * sin2th * (1. + 2. * r / rho2)) * pfac * pfac;
+    gcon[3][3] = irho2 / (sin2th);
 
 #elif (CKS)
     int i, j, k;
@@ -670,28 +670,39 @@ void gcon_func(double *X, double gcon[][NDIM]) {
 void gcov_func(double *X, double gcov[][NDIM]) {
 
 #if (MKS)
+    for(int i=0;i<4;i++)
+	for(int j=0;j<4;j++)
+		gcov[i][j]=0;
+
     double r = exp(X[1]);
-    double theta = X[2] + 0.5 * (1. - hslope) * sin(2. * X[2]);
+    double theta = X[2] + 0.5 * hslope * sin(2. * X[2]);
 
     double sinth = sin(theta);
     double sin2th = sinth * sinth;
     double costh = cos(theta);
+    double tfac, rfac, hfac, pfac;
+    double rho2 = r * r + a * a * costh * costh;
 
-    double irho2 = 1. / (r * r + a * a * costh * costh);
+    tfac = 1.;
+    rfac = r;
+    hfac = 1. + hslope * cos(2. * X[2]);
+    pfac = 1.;
 
-    double hfac = 1 + (1. - hslope) * cos(2. * X[2]);
-
-    gcov[0][0] = -1. - 2. * r * irho2;
-    gcov[0][1] = 2. * irho2;
+    gcov[0][0] = (-1. + 2. * r / rho2) * tfac * tfac;
+    gcov[0][1] = (2. * r / rho2) * tfac * rfac;
+    gcov[0][3] = (-2. * a * r * sin2th / rho2) * tfac * pfac;
 
     gcov[1][0] = gcov[0][1];
-    gcov[1][1] = irho2 * (r * (r - 2.) + a * a) / (r * r);
-    gcov[1][3] = a * irho2 / r;
+    gcov[1][1] = (1. + 2. * r / rho2) * rfac * rfac;
+    gcov[1][3] = (-a * sin2th * (1. + 2. * r / rho2)) * rfac * pfac;
 
-    gcov[2][2] = irho2 / (hfac * hfac);
+    gcov[2][2] = rho2 * hfac * hfac;
 
-    gcov[3][1] = g_uu[1][3];
-    gcov[3][3] = irho2 / (sin2th);
+    gcov[3][0] = gcov[0][3];
+    gcov[3][1] = gcov[1][3];
+    gcov[3][3] =
+        sin2th * (rho2 + a * a * sin2th * (1. + 2. * r / rho2)) * pfac * pfac;
+
 
 #elif (CKS)
     int i, j, k;
@@ -878,7 +889,6 @@ int stop_criterion(struct of_photon *ph) {
     }
 
     if (isnan(ph->K[0])) {
-        fprintf(stderr, "isnan K[0]\n");
         return 1;
     }
 
@@ -900,7 +910,7 @@ int record_criterion(struct of_photon *ph) {
 
 /* EPS doublely ought to be related to the number of
    zones in the simulation. */
-#define EPS 0.025
+#define EPS 0.01
 // #define EPS   0.01
 
 double stepsize(double X_u[4], double U_u[4], double dx_local) {
@@ -1010,8 +1020,6 @@ void record_super_photon(struct of_photon *ph) {
         (int)((lE - lE0) / dlE + 2.5) - 2; /* bin is centered on iE*dlE + lE0 */
     /* check limits */
     if (iE < 0 || iE >= N_EBINS) {
-        fprintf(stderr, "iE outside of range, iE %d lE %e ph E %e\n", iE, lE,
-                ph->E);
         return;
     }
 

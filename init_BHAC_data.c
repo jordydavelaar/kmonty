@@ -2,6 +2,7 @@
 #include "BHAC_model.h"
 #include <stdio.h>
 #include <stdlib.h>
+
 /* HDF5 v1.6 API */
 // #include <H5LT.h>
 
@@ -79,6 +80,7 @@ void read_node(FILE *file_id, int *igrid, int *refine, int ndimini, int level,
 
 double get_detgamma(double x, double y, double z) {
 
+
     double g_dd[4][4];
     double X_u[4];
 
@@ -86,42 +88,25 @@ double get_detgamma(double x, double y, double z) {
     X_u[1] = x;
     X_u[2] = y;
     X_u[3] = z;
+    gcov_func(X_u, g_dd);
 
-    double rho = X_u[1] * X_u[1] + X_u[2] * X_u[2] + X_u[3] * X_u[3] - a * a;
-    double r = sqrt(0.5 * (rho + sqrt(rho * rho + 4. * z * z * a * a)));
-    double sqrtgamma;
+    double detgamma =
+        g_dd[1][1] * (g_dd[2][2] * g_dd[3][3] - g_dd[3][2] * g_dd[2][3]) -
+        g_dd[1][2] * (g_dd[2][1] * g_dd[3][3] - g_dd[3][1] * g_dd[2][3]) +
+        g_dd[1][3] * (g_dd[2][1] * g_dd[3][2] - g_dd[2][2] * g_dd[3][1]);
 
-    if (r < 1)
-        sqrtgamma =
-            sqrt(1.0 + (1.4142135623730950 *
-                        sqrt(rho + sqrt(rho * rho + 4.0 * a * a * z * z))) /
-                           sqrt(rho * rho + 4.0 * a * a * z * z + 1.e-3));
-    else
-        sqrtgamma =
-            sqrt(1.0 + (1.4142135623730950 *
-                        sqrt(rho + sqrt(rho * rho + 4.0 * a * a * z * z))) /
-                           sqrt(rho * rho + 4.0 * a * a * z * z));
+   if(isnan(sqrt(detgamma))){
+     fprintf(stderr,"x %e y  %e z %e det %e sqrt %e\n",x,y,z,detgamma,sqrt(detgamma));
+     for(int i=0;i<4;i++){
+     for(int j=0;j<4;j++){
+	fprintf(stderr,"%d %d %e\n",i,j,g_dd[i][j]);
+	}
+     }
+   fprintf(stderr,"%e\n",a);
+   }
 
-    return sqrtgamma;
+    return sqrt(detgamma);
 
-    /*
-       metric_dd(X_u,g_dd);
-
-       double detgamma = g_dd[1][1] * ( g_dd[2][2]*g_dd[3][3] -
-       g_dd[3][2]*g_dd[2][3]) - g_dd[1][2] * ( g_dd[2][1] * g_dd[3][3] -
-       g_dd[3][1]*g_dd[2][3]) + g_dd[1][3] * (g_dd[2][1]*g_dd[3][2] - g_dd[2][2]
-       * g_dd[3][1]); #if(DEBUG) if(isnan(sqrt(detgamma))){ double R2 =
-       x*x+y*y+z*z; double a2 = a * a; double r2 = (R2 - a2 + sqrt((R2 - a2)*(R2
-       - a2)+4.*a2*z * z))*0.5; double r_current = sqrt(r2);
-
-       fprintf(stderr,"isnan detgam %e %e rc
-       %e\n",sqrt(detgamma),detgamma,r_current);
-       detgamma=0;
-       exit(1);
-       }
-       #endif
-       return sqrt(detgamma);
-     */
 }
 
 void calc_coord_bar(double X[4], double *dxc_block, double Xbar[4]) {
@@ -171,16 +156,16 @@ void calc_coord_bar(double X[4], double *dxc_block, double Xbar[4]) {
     for (int k = 0; k < 3; k++) {
         for (int j = 0; j < 3; j++) {
             for (int i = 0; i < 3; i++) {
-                detgamma = get_detgamma(X[0] + dxc_block[0] / 2. * is[i],
-                                        X[1] + dxc_block[1] / 2. * js[j],
-                                        X[2] + dxc_block[2] / 2. * ks[k]);
+                detgamma = get_detgamma(X[1] + dxc_block[0] / 2. * is[i],
+                                        X[2] + dxc_block[1] / 2. * js[j],
+                                        X[3] + dxc_block[2] / 2. * ks[k]);
                 norm += detgamma * coef_3D[i][j][k];
                 xbar += detgamma * coef_3D[i][j][k] *
-                        (X[0] + dxc_block[0] / 2. * is[i]);
+                        (X[1] + dxc_block[0] / 2. * is[i]);
                 ybar += detgamma * coef_3D[i][j][k] *
-                        (X[1] + dxc_block[1] / 2. * js[j]);
+                        (X[2] + dxc_block[1] / 2. * js[j]);
                 zbar += detgamma * coef_3D[i][j][k] *
-                        (X[2] + dxc_block[2] / 2. * ks[k]);
+                        (X[3] + dxc_block[2] / 2. * ks[k]);
                 //				fprintf(stderr,"x %e %e
                 //%e\n",X[0]+dxc_block[0]/2. * is[i],X[1]+dxc_block[1]/2. *
                 // js[j],X[2]+dxc_block[2]/2. * ks[k]);
@@ -199,16 +184,20 @@ void calc_coord_bar(double X[4], double *dxc_block, double Xbar[4]) {
     Xbar[1] = xbar;
     Xbar[2] = ybar;
     Xbar[3] = zbar;
-#if (DEBUG)
-    if (isnan(Xbar[0])) {
+    if (isnan(Xbar[1]) || isnan(Xbar[2]) || isnan(Xbar[3]))
+ {
+        fprintf(stderr, "isnan in calc_coord_bar %e %e %e %e\n", X[1],
+                X[2], X[3], norm);
         fprintf(stderr, "isnan in calc_coord_bar %e %e %e %e\n", Xbar[1],
                 Xbar[2], Xbar[3], norm);
+        fprintf(stderr, "isnan in calc_coord_bar %e %e %e %e\n", dxc_block[0],
+                dxc_block[1], dxc_block[2], norm);
+	fprintf(stderr,"%e\n",get_detgamma(X[1],X[2],X[3]));
         Xbar[0] = 0;
         Xbar[1] = 0;
         Xbar[2] = 0;
         exit(1);
     }
-#endif
 }
 
 void calc_coord(int c, int *nx, int ndimini, double *lb, double *dxc_block,
@@ -216,13 +205,14 @@ void calc_coord(int c, int *nx, int ndimini, double *lb, double *dxc_block,
     int local_ig[3];
 
     local_ig[0] = (int)((c % nx[0]));
-    local_ig[1] = (int)(fmod((((double)c) / ((double)nx[0])), (double)nx[0]));
+    local_ig[1] = (int)(fmod((((double)c) / ((double)nx[0])), (double)nx[1]));
     if (ndimini == 3) {
         local_ig[2] = (int)(((double)c) / ((double)nx[0] * nx[1]));
     }
-    X[0] = 0;
+
+   X[0]=0;
     for (int i = 0; i < ndimini; i++) {
-        X[i + 1] = lb[i] + (local_ig[i] + 0.5) * dxc_block[i]; // cell centered
+        X[i+1] = lb[i] + (local_ig[i] + 0.5) * dxc_block[i]; // cell centered
     }
 
     if (isnan(X[0])) {
@@ -232,21 +222,20 @@ void calc_coord(int c, int *nx, int ndimini, double *lb, double *dxc_block,
     }
 }
 
-void convert2prim(double prim[8], double **conserved, int c, double X[4],
-                  double X_cell[4], double dxc[3]) {
-
-    double r_current = get_r(X);
+void convert2prim(double prim[8], double **conserved, int c, double X[3],
+                  double Xgrid[3], double dxc[3]) {
 
     double X_u[4];
     double g_dd[4][4], g_uu[4][4];
-    // X_u[0] = 0;
-    // X_u[1] = Xgrid[0]; // - dxc[0];
-    // X_u[2] = Xgrid[1]; // - dxc[0];
-    // X_u[3] = Xgrid[2]; // - dxc[0];
+
+    double r_current = get_r(X);
+
+    if (r_current < 1.00)
+        return;
 
     gcov_func(X, g_dd);
     gcon_func(X, g_uu);
-
+    conserved[S2][c] = conserved[S2][c];
     double BS = conserved[S1][c] * conserved[B1][c] +
                 conserved[S2][c] * conserved[B2][c] +
                 conserved[S3][c] * conserved[B3][c];
@@ -254,6 +243,7 @@ void convert2prim(double prim[8], double **conserved, int c, double X[4],
 
     double B_d[4];
     double S_u[4];
+
     S_u[1] = 0;
     S_u[2] = 0;
     S_u[3] = 0;
@@ -276,30 +266,23 @@ void convert2prim(double prim[8], double **conserved, int c, double X[4],
     }
 
     for (int i = 1; i < 4; i++) {
-        //		for(int j=1;j<4;j++){
         Bsq += B_d[i] * conserved[B1 + i - 1][c];
     }
-    //	}
 
-#if (DEBUG)
     if (isnan(BS) || isnan(Bsq)) {
         fprintf(stderr, "Bsq %e BS %e\n", Bsq, BS);
         fprintf(stderr, "B %e %e %e\n", conserved[B1][c], conserved[B2][c],
                 conserved[B3][c]);
         fprintf(stderr, "V %e %e %e\n", conserved[S1][c], conserved[S2][c],
                 conserved[S3][c]);
-        fprintf(stderr, "rc %e %e X %e %e %e\n", r_current, cutoff_inner, X[0],
-                X[1], X[2]);
-        LOOP_ij fprintf(stderr, "gij %d %d %e\n", i, j, g_dd[i][j]);
+
         exit(1);
     }
-#endif
     prim[KRHO] = conserved[D][c] / conserved[LFAC][c];
     prim[UU] = (neqpar[0] - 1.) / neqpar[0] *
                (conserved[XI][c] / pow(conserved[LFAC][c], 2.) - prim[KRHO]) /
                (neqpar[0] -
                 1.); // need internal energy not pressure so extra 1/(gam-1)
-
     prim[U1] =
         S_u[1] / (conserved[XI][c] + Bsq) +
         conserved[B1][c] * BS / (conserved[XI][c] * (conserved[XI][c] + Bsq));
@@ -310,41 +293,65 @@ void convert2prim(double prim[8], double **conserved, int c, double X[4],
         S_u[3] / (conserved[XI][c] + Bsq) +
         conserved[B3][c] * BS / (conserved[XI][c] * (conserved[XI][c] + Bsq));
 
-    prim[B1] = conserved[B1][c];
-    prim[B2] = conserved[B2][c];
-    prim[B3] = conserved[B3][c];
-    // #if (DEBUG)
-    double VdotV = 0;
-    for (int i = 1; i < 4; i++) {
-        for (int j = 1; j < 4; j++) {
-            VdotV += g_dd[i][j] * prim[U1 + i - 1] * prim[U1 + j - 1];
+    prim[U1] *= conserved[LFAC][c];
+    prim[U2] *= conserved[LFAC][c];
+    prim[U3] *= conserved[LFAC][c];
+
+    prim[B1] =  conserved[B1][c];
+    prim[B2] =  conserved[B2][c];
+    prim[B3] =  conserved[B3][c];
+
+    // con2prim can fail for internal energy, we have a backup with entropy.
+    if (prim[UU] < 0) {
+        fprintf(stderr, "UU %e\n", prim[UU]);
+        prim[UU] = (conserved[DS][c] / conserved[D][c]) *
+                   pow(prim[KRHO], neqpar[0] - 1) /
+                   (neqpar[0] -
+                    1.); // need internal energy not pressure so extra 1/(gam-1)
+        fprintf(stderr, "UU %e\n", prim[UU]);
+        if (prim[UU] < 0) {
+            fprintf(stderr, "Entropy UU reset failed %e\n", prim[UU]);
+            prim[UU] = 1e-14;
+            fprintf(stderr, "UU set to low number %e\n", prim[UU]);
         }
     }
-    if (VdotV > 1.) {
-        fprintf(stderr, "VdotV too large in con2prim %e %e %e %e\n", VdotV,
-                X[1], X[2], X[3]);
+
+    double gVdotgV = 0;
+
+    for (int i = 1; i < 4; i++) {
+        for (int j = 1; j < 4; j++) {
+            gVdotgV += g_dd[i][j] * prim[U1 + i - 1] * prim[U1 + j - 1];
+        }
+    }
+    double gammaf = sqrt(gVdotgV + 1.);
+
+
+    if (prim[UU] < 0) {
+        fprintf(stderr, "U %e gam %e XI %e LFAC %e lor %e RHO %e\n", prim[UU],
+                neqpar[0], conserved[XI][c], conserved[LFAC][c], gammaf,
+                prim[KRHO]);
         exit(1);
     }
 
-    double lor = 1 / sqrt(1 - VdotV);
-
-    if (isnan(lor)) {
+    if (isnan(gammaf)) {
+        fprintf(stderr, "gVdotgV %e lfac %e lor %e\n", gVdotgV,
+                conserved[LFAC][c], gammaf);
         fprintf(stderr, "\n");
 
-        fprintf(stderr, "lor %e vdotv %e lfac %e XI %e Bsq %e BS %e\n", lor,
-                VdotV, conserved[LFAC][c], conserved[XI][c], Bsq, BS);
+        fprintf(stderr, "lor %e gVdotgV %e lfac %e XI %e Bsq %e BS %e\n",
+                gammaf, gVdotgV, conserved[LFAC][c], conserved[XI][c], Bsq, BS);
         fprintf(stderr, "xi? %e %e\n",
                 conserved[LFAC][c] * conserved[LFAC][c] * prim[KRHO] *
                     (1 + neqpar[0] * prim[UU] / prim[KRHO]),
                 conserved[XI][c]);
         fprintf(stderr, "rc %e %e\n", r_current, (1. + sqrt(1. - a * a)));
-        fprintf(stderr, "X %e %e %e\n", X[0], X[1], X[2]);
+        fprintf(stderr, "Xbar %e %e %e\n", X[1], X[2], X[3]);
+        fprintf(stderr, "X %e %e %e\n", Xgrid[1], Xgrid[2], Xgrid[3]);
         fprintf(stderr, "dxc %e %e %e\n", dxc[0], dxc[1], dxc[2]);
-        //		exit(1);
-    }
-    if (isnan(lor))
         exit(1);
-    // #endif
+    }
+    if (isnan(gammaf))
+        exit(1);
 }
 
 uint64_t mortonEncode(unsigned int ig1, unsigned int ig2, unsigned int ig3) {
@@ -438,7 +445,7 @@ void init_bhac_amr_data(char *fname) {
     int i = 1;
 
     long int offset;
-    int j = 0;
+    int j = 0, k;
     int levmaxini, ndirini, nwini, nws, neqparini, it, t;
     fseek(file_id, 0, SEEK_END);
     offset = -36 - 4; // -4; // 7 int, 1 double = 7 * 4 + 1*8 = 56?
@@ -449,7 +456,7 @@ void init_bhac_amr_data(char *fname) {
 
     fread(buffer_i, sizeof(int), 1, file_id);
     levmaxini = buffer_i[0];
-    fprintf(stderr, "%d\n", levmaxini);
+
     fread(buffer_i, sizeof(int), 1, file_id);
     ndimini = buffer_i[0];
 
@@ -477,6 +484,9 @@ void init_bhac_amr_data(char *fname) {
     neqpar = (double *)malloc(neqparini * sizeof(double));
     nx = (int *)malloc(ndimini * sizeof(int));
 
+    LFAC = nwini-2;
+    XI = nwini-1;
+
     for (int k = 0; k < ndimini; k++) {
         fread(buffer_i, sizeof(int), 1, file_id);
         nx[k] = buffer_i[0];
@@ -487,7 +497,7 @@ void init_bhac_amr_data(char *fname) {
     }
 
     a = neqpar[NSPIN];
-
+    Rh = 1 + sqrt(1. - a * a);
 
     FILE *inputgrid;
 
@@ -554,6 +564,10 @@ void init_bhac_amr_data(char *fname) {
         cells *= nx[k];
     }
 
+    N1 = nleafs;
+    N2 = cells;
+    N3 = 1;
+
     long int size_block = cells * (nwini)*8; // size of a block in bytes
 
     // Read forest
@@ -595,7 +609,7 @@ void init_bhac_amr_data(char *fname) {
     }
 
     level_one_Morton_ordered(iglevel1_sfc, sfc_iglevel1);
-    int i, j, k;
+
     for (int sfc_i = 0; sfc_i < ng[2] * ng[1] * ng[0]; sfc_i++) {
         i = sfc_iglevel1[sfc_i][0];
         j = sfc_iglevel1[sfc_i][1];
@@ -644,7 +658,6 @@ void init_bhac_amr_data(char *fname) {
     if (world_rank == 0)
         fprintf(stderr, "\nReading BODY...\n");
 
-    fprintf(stderr, "im here!\n");
     for (int i = 0; i < nleafs; i++) {
         for (int n = 0; n < ndimini; n++) {
             block_info[i].lb[n] =
@@ -669,11 +682,11 @@ void init_bhac_amr_data(char *fname) {
             }
         }
 
-#pragma omp parallel for shared(values, p) schedule(static, 1) private(Xcent)
+//#pragma omp parallel for shared(values, p) schedule(static, 1) private(Xcent)
         for (int c = 0; c < cells; c++) {
             calc_coord(c, nx, ndimini, block_info[i].lb,
                        block_info[i].dxc_block, Xcent);
-            // calc_coord_bar(Xcent,block_info[i].dxc_block,Xbar);
+            calc_coord_bar(Xcent,block_info[i].dxc_block,Xbar);
 
 #if (DEBUG)
             if (isnan(Xcent[0])) {
@@ -682,7 +695,7 @@ void init_bhac_amr_data(char *fname) {
             }
 #endif
             double prim[8];
-            convert2prim(prim, values, c, Xcent, Xcent,
+            convert2prim(prim, values, c, Xbar, Xcent,
                          block_info[i].dxc_block);
 
             p[KRHO][i][c][0] = prim[KRHO];

@@ -20,8 +20,8 @@
 #define MPI 1
 #define OPENMP 0
 
-#define MKS 0
-#define CKS 1
+#define MKS 1
+#define CKS 0
 
 #define SFC 1
 
@@ -78,8 +78,6 @@ double yhigh;
 #define S3 3
 #define TAU 4
 #define DS 8
-#define LFAC 10
-#define XI 11
 
 /* numerical convenience */
 #define SMALL 1.e-40
@@ -137,9 +135,13 @@ typedef struct of_spectrum type_spectr;
 #define N_THBINS 3
 #define N_PHIBINS 1
 
-#define N1 (17288) // 512
-#define N2 (4096)  // 128
-#define N3 (1)
+//#define N1 (17288) // 512
+//#define N2 (4096)  // 128
+//#define N3 (1)
+
+extern int N1;
+extern int N2;
+extern int N3;
 
 struct of_grid {
     struct of_spectrum spec[N_EBINS];

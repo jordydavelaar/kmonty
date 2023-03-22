@@ -97,7 +97,8 @@ gsl_integration_workspace *w;
 #pragma omp threadprivate(r)
 
 int main(int argc, char *argv[]) {
-    double Ntot, N_superph_made_local, N_superph_made;
+    double Ntot;
+    long int N_superph_made_local, N_superph_made;
     int quit_flag, myid;
     struct of_photon ph;
     time_t currtime, starttime;
@@ -117,7 +118,7 @@ int main(int argc, char *argv[]) {
     // Get the number of processes
     int world_size;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-    Ns /= world_size;
+//    Ns /= world_size;
     // Get the rank of the process
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -134,8 +135,8 @@ int main(int argc, char *argv[]) {
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
-    fprintf(stderr, "Initialized processor %s, rank %d out of %d processors\n",
-            processor_name, world_rank, world_size);
+//    fprintf(stderr, "Initialized processor %s, rank %d out of %d processors\n",
+  //          processor_name, world_rank, world_size);
     fflush(stderr);
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -225,13 +226,13 @@ int main(int argc, char *argv[]) {
 
                     /* give interim reports on rates */
 #if MPI
-                    if (((int)(N_superph_made_local)) % 1000 == 0 &&
+                    if (((int)(N_superph_made_local)) % 10000 == 0 &&
                         N_superph_recorded * world_size > 0 &&
                         world_rank == 0) {
                         currtime = time(NULL);
                         fprintf(stderr, "time %g, rate %g ph/s\n",
                                 (double)(currtime - starttime),
-                                N_superph_made_local * world_size /
+                               (double)N_superph_made_local * world_size /
                                     (currtime - starttime));
 
                         fflush(stderr);
@@ -244,7 +245,7 @@ int main(int argc, char *argv[]) {
                         currtime = time(NULL);
                         fprintf(stderr, "time %g, rate %g ph/s\n",
                                 (double)(currtime - starttime),
-                                N_superph_made_local / (currtime - starttime));
+                                (double)N_superph_made_local / (currtime - starttime));
                     }
 #endif
                 }
@@ -269,19 +270,20 @@ int main(int argc, char *argv[]) {
                 fflush(stderr);
             }
 
-            MPI_Allreduce(&N_superph_made_local, &N_superph_made, 1, MPI_DOUBLE,
+            MPI_Allreduce(&N_superph_made_local, &N_superph_made, 1, MPI_LONG,
                           MPI_SUM, MPI_COMM_WORLD);
             MPI_Allreduce(&N_superph_recorded, &N_superph_recorded_total, 1,
                           MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 
             if (world_rank == 0) {
-                fprintf(stderr, "Final time %g, rate %g ph/s\n",
+                fprintf(stderr, "Final time %g, record rate %g ph/s generated rate %g ph/s\n",
                         (double)(currtime - starttime),
                         (double)N_superph_recorded_total /
+                            (currtime - starttime), (double)N_superph_made /
                             (currtime - starttime));
                 fprintf(stderr, "Made %d Recorded %d\n", N_superph_made,
                         N_superph_recorded_total);
-                report_spectrum(N_superph_made);
+                report_spectrum((int)N_superph_made);
             }
             // Finalize the MPI environment.
             MPI_Finalize();
