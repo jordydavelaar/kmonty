@@ -7,14 +7,13 @@
    assumes superphotons do not step out of simulation then back in
 
  */
-#include "BHAC_model.h"
 #include "decs.h"
 
 #define MAXNSTEP 2000000
 
 void track_super_photon(struct of_photon *ph, int *N_superph_recorded,
                         int igrid) {
-    int bound_flag;
+    int bound_flag; 
     double dtau_scatt, dtau_abs, dtau;
     double bi, bf;
     double alpha_scatti, alpha_scattf;
