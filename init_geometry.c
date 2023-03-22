@@ -25,24 +25,22 @@ gsl_permutation *perm;
 
 /* assumes gcov has been set first; returns determinant */
 
-double gdet_func(double gcov[][NDIM], double X[NDIM])
-{
-        double d;
-        int k, l, signum;
+double gdet_func(double gcov[][NDIM], double X[NDIM]) {
+    double d;
+    int k, l, signum;
 
-  if (gsl_gcov == NULL) {
-    gsl_gcov = gsl_matrix_alloc(NDIM, NDIM);
-    perm = gsl_permutation_alloc(NDIM);
-  }
+    if (gsl_gcov == NULL) {
+        gsl_gcov = gsl_matrix_alloc(NDIM, NDIM);
+        perm = gsl_permutation_alloc(NDIM);
+    }
 
-  DLOOP gsl_matrix_set(gsl_gcov, k, l, gcov[k][l]);
+    DLOOP gsl_matrix_set(gsl_gcov, k, l, gcov[k][l]);
 
-  gsl_linalg_LU_decomp(gsl_gcov, perm, &signum);
+    gsl_linalg_LU_decomp(gsl_gcov, perm, &signum);
 
-        d = gsl_linalg_LU_det(gsl_gcov, signum);
+    d = gsl_linalg_LU_det(gsl_gcov, signum);
 
-        return (sqrt(fabs(d)));
+    return (sqrt(fabs(d)));
 }
-
 
 #undef DELTA

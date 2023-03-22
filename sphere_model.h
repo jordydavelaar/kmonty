@@ -39,19 +39,17 @@
 
 ***********************************************************************************/
 
-
-
 /* Global variables and function prototypes for harm(2d) models */
 
 #ifndef global
 #define global extern
 #endif
 
- #define RSPHERE (100.)
- #define BETA (20.)
- #define TAUS (1.e-5)
- #define THETAE (10.)
- #define MBH (8.1549e+39)
+#define RSPHERE (100.)
+#define BETA (20.)
+#define TAUS (1.e-5)
+#define THETAE (10.)
+#define MBH (8.1549e+39)
 
 global double ****econ;
 global double ****ecov;
@@ -73,16 +71,17 @@ void init_geometry(void);
 void init_sphere_data(char *fname);
 void init_nint_table(void);
 void init_storage(void);
-double dOmega_func(double x2i, double x2f,double x3i, double x3f);
+double dOmega_func(double x2i, double x2f, double x3i, double x3f);
 
-void check_acczone(int *ACCZONE, double var1,double var2);
-void sample_zone_photon(int i, int j, int k, double dnmax, struct of_photon *ph);
+void check_acczone(int *ACCZONE, double var1, double var2);
+void sample_zone_photon(int i, int j, int k, double dnmax,
+                        struct of_photon *ph);
 double interp_scalar(double ***var, int i, int j, double coeff[4]);
 int get_zone(int *i, int *j, int *k, double *dnamx);
 void Xtoijk(double X[NDIM], int *i, int *j, int *k, double del[NDIM]);
 void coord(int i, int j, double *X);
 void get_fluid_zone(int i, int j, int k, double *Ne, double *Thetae, double *B,
-		    double Ucon[NDIM], double Bcon[NDIM], int * ACCZONE);
+                    double Ucon[NDIM], double Bcon[NDIM], int *ACCZONE);
 void get_connection(double *X, double lconn[][NDIM][NDIM]);
 void gcov_func(double *X, double gcov[][NDIM]);
 void gcon_func(double gcov[][NDIM], double gcon[][NDIM]);
