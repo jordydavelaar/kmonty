@@ -3,8 +3,8 @@
 /*
    HARM model specWification routines
  */
-#include "BHAC_model.h"
 #include "decs.h"
+#include "BHAC_model.h"
 
 struct of_spectrum ***spect;
 extern struct of_spectrum ***shared_spect;
@@ -127,6 +127,7 @@ double bias_func(double Te, double w) {
     bias = 100. * Te * Te / bias_norm;
 #pragma omp atomic
     bias /= max_tau_scatt;
+
     if (bias < 1)
         bias = 1.;
     //  if (bias > 3000.0)

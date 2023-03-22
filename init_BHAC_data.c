@@ -651,6 +651,8 @@ void init_bhac_amr_data(char *fname) {
     long int count = 0;
     double Xcent[4];
     double Xbar[4];
+    double dV,V=0,gdet;
+    double gcov[4][4];
 
     init_storage();
 
@@ -708,13 +710,29 @@ void init_bhac_amr_data(char *fname) {
             p[B1][i][c][0] = prim[B1];
             p[B2][i][c][0] = prim[B2];
             p[B3][i][c][0] = prim[B3];
+
+            gcov_func(Xbar,gcov);
+
+	    double gam = neqpar[0];
+	    double Thetae_unit = (gam - 1.) * ((MP / ME)) / (3. + 1);
+
+	   double r = get_r(Xbar);
+            if( r>Rh){
+            dV = block_info[i].dxc_block[0]*block_info[i].dxc_block[1]*block_info[i].dxc_block[2];
+            gdet= gdet_func( gcov, Xbar);
+	    bias_norm += dV * gdet * pow(p[UU][i][c][0] / p[KRHO][i][c][0] *
+				    Thetae_unit, 2.);
+	    V+= gdet*dV;
+            }
         }
 
         offset = (nx[0] + 1) * (nx[1] + 1) * (nx[2] + 1) * nws * 8;
         fseek(file_id, offset, SEEK_CUR);
     }
 
+    bias_norm /= V;
+
+
     free(values);
     free(forest);
-    // exit(1);
 }

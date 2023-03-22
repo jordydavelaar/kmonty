@@ -30,7 +30,7 @@
 #define POWERLAW 0
 #define MIXED 0
 
-#define COMPTON 0
+#define COMPTON 1
 
 #define FOLDING 0
 
@@ -44,7 +44,7 @@
 
 /* Range of initial superphoton frequencies */
 #define NUMIN 1.e8
-#define NUMAX 1.e16
+#define NUMAX 1.e24
 
 #define THETAE_MAX 100.
 #define THETAE_MIN 0.002
@@ -130,8 +130,8 @@ struct of_spectrum {
 
 typedef struct of_spectrum type_spectr;
 
-#define N_ESAMP 100
-#define N_EBINS 100
+#define N_ESAMP 200
+#define N_EBINS 200
 #define N_THBINS 3
 #define N_PHIBINS 1
 

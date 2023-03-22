@@ -154,6 +154,7 @@ void track_super_photon(struct of_photon *ph, int *N_superph_recorded,
                         dtau, ph->tau_abs);
             x1 = -log(monty_rand());
             php.w = ph->w / bias;
+
             if (bias * dtau_scatt > x1 && php.w > WEIGHT_MIN) {
                 if (isnan(php.w) || isinf(php.w)) {
                     fprintf(stderr,
@@ -206,7 +207,7 @@ void track_super_photon(struct of_photon *ph, int *N_superph_recorded,
                                  &igrid);
 
                 if (Ne > 0.) {
-                    scatter_super_photon(ph, &php, Ne, Thetae, B, Ucon, Bcon,
+		        scatter_super_photon(ph, &php, Ne, Thetae, B, Ucon, Bcon,
                                          Gcov, ACCZONE);
                     if (ph->w < 1.e-100) { /* must have been a problem popping k
                                               back onto light cone */
