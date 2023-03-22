@@ -23,6 +23,8 @@
 #define MKS 0
 #define CKS 1
 
+#define SFC 1
+
 #define THERMAL 1
 #define KAPPA 0
 #define POWERLAW 0
