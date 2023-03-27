@@ -1,6 +1,6 @@
 # kmonty
 
-Public version of kmonty. A General Relativistic Monte Carlo Radation Transport code. The code is currently coupled to the non-uniform data format from the GRMHD code BHAC. kmonty can be used to compute spectra based based on synchrtron emission and Compton upscattering.
+Public version of kmonty. A General Relativistic Monte Carlo Radation Transport code. The code is currently coupled to the non-uniform data format from the GRMHD code BHAC, www.bhac.science. kmonty can be used to compute spectra based based on synchrtron emission and Compton upscattering.
 
 When using this code please cite
 
