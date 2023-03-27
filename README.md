@@ -46,26 +46,34 @@ Space filling curve, needed for some of the BHAC simulations
 
 Metric type
 
-```#define MKS 1
-#define CKS 0```
+```
+#define MKS 1
+#define CKS 0
+```
 
 Type of distrubtion function
 
-```#define THERMAL 1
+```
+#define THERMAL 1
 #define KAPPA 0
-#define POWERLAW 0 ```
+#define POWERLAW 0 
+```
 
 Frequency range of initial seed photons
 
-```#define NUMIN 1.e8
-#define NUMAX 1.e24```
+```
+#define NUMIN 1.e8
+#define NUMAX 1.e24
+```
 
 Detector properies, amount of energy of angle bins.
 
-```#define N_ESAMP 200
+```
+#define N_ESAMP 200
 #define N_EBINS 200
 #define N_THBINS 3
-#define N_PHIBINS 1```
+#define N_PHIBINS 1
+```
 
 
 # Tutorial
