@@ -20,7 +20,7 @@ To compile for BHAC use
 make bhac
 ```
 
-#Usage
+# Usage
 
 To run kmonty use the following command
 
