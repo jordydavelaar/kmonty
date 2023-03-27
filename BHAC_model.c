@@ -1187,7 +1187,7 @@ void report_spectrum(double N_superph_made) {
     FILE *fp;
     char filename[100];
 
-    sprintf(filename, "spec_kappa_%d.dat", index);
+    sprintf(filename, "spec_%d.dat", index);
     fp = fopen(filename, "w");
     if (fp == NULL) {
         fprintf(stderr, "trouble opening spectrum file\n");
